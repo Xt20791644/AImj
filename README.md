@@ -10,7 +10,7 @@
 | 后端 | Laravel 12 (PHP 8.2) | REST API |
 | 数据库 | MySQL 8.0 | 用户/积分/作品数据 |
 | AI 生图/视频 | 可灵AI (Kling) | 真人写实风格短剧 |
-| AI 配音 | Azure TTS | 20+ 中文音色，情感合成 |
+| AI 配音 | CosyVoice（阿里云百炼） | 20+ 预置音色 + 音色克隆 |
 | 文本管线 | opencode-storyclaw | 剧本→角色→分镜→提示词 |
 | 视频合成 | FFmpeg | 拼接/混音/字幕 |
 | 部署 | Docker Compose | 一键启动开发环境 |
@@ -65,8 +65,7 @@ cp backend/.env.example backend/.env
 ```env
 KLING_API_KEY=你的可灵API Key
 KLING_API_SECRET=你的可灵API Secret
-AZURE_SPEECH_KEY=你的Azure Speech Key
-AZURE_SPEECH_REGION=eastasia
+COSYVOICE_API_KEY=你的CosyVoice API Key (阿里云百炼)
 ```
 
 ### 3. 启动服务
@@ -126,7 +125,7 @@ docker exec aiduanju-backend php artisan db:seed
 
 ```
 用户输入故事 → ① 剧本分析 → ② 角色提取 → ③ 分镜生成
-→ ④ 可灵AI生图 → ⑤ 可灵AI生视频 → ⑥ Azure TTS配音
+→ ④ 可灵AI生图 → ⑤ 可灵AI生视频 → ⑥ CosyVoice配音
 → ⑦ FFmpeg合成 → 完成通知
 ```
 
