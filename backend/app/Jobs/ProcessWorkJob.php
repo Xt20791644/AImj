@@ -130,6 +130,27 @@ class ProcessWorkJob implements ShouldQueue
         }
     }
 
+    private function buildEnhancedPrompt(Work $work, int $sceneNum = 1): string
+    {
+        $script = $work->meta['script'] ?? $work->content;
+        $promptBase = mb_substr($script, 0, 500);
+
+        $stylePrompt = match($work->style) {
+            'realistic' => '真人写实电影质感，专业电影摄影灯光，超清4K画质，真实人物表情自然细腻，皮肤纹理清晰，电影级调色，浅景深虚化背景',
+            'anime' => '日系动画电影风格，细腻手绘质感，柔和水彩渲染，明亮暖色调，精致场景细节，吉卜力风格',
+            '3d' => '3D动画电影质感，Pixar级别渲染，精细材质贴图，真实光影追踪，流畅动画表现',
+            default => '真人写实电影质感，专业摄影灯光，高清画质'
+        };
+
+        $cameraHints = match($sceneNum % 3) {
+            1 => '中景镜头，平视角度',
+            2 => '近景特写，浅景深',
+            0 => '全景广角，电影构图',
+        };
+
+        return "短剧《{$work->title}》第{$sceneNum}幕：{$promptBase}。{$stylePrompt}。{$cameraHints}。避免模糊、变形、低画质、AI感。";
+    }
+
     /**
      * 生成图片并轮询获取结果 URL
      */
@@ -137,11 +158,9 @@ class ProcessWorkJob implements ShouldQueue
     {
         $n = max(1, min(3, (int)($config['image_n'] ?? 1)));
         $urls = [];
-        $script = $work->meta['script'] ?? $work->content;
-        $promptBase = mb_substr($script, 0, 500);
 
         for ($i = 0; $i < $n; $i++) {
-            $prompt = "短剧《{$work->title}》场景" . ($i + 1) . ": {$promptBase}，{$work->style}风格";
+            $prompt = $this->buildEnhancedPrompt($work, $i + 1);
             $this->runStep($work, 'images', 'processing', "正在生成第 " . ($i + 1) . " / {$n} 张图片...");
 
             $result = $kling->generateImage($prompt, $config);
@@ -166,11 +185,12 @@ class ProcessWorkJob implements ShouldQueue
     {
         if (!empty($imageUrls)) {
             // 图生视频
-            $result = $kling->imageToVideo($imageUrls[0], "短剧《{$work->title}》场景", $config);
+            $prompt = $this->buildEnhancedPrompt($work, 1);
+            $result = $kling->imageToVideo($imageUrls[0], $prompt, $config);
         } else {
             // 文生视频（降级）
-            $script = $work->meta['script'] ?? $work->content;
-            $result = $kling->textToVideo(mb_substr($script, 0, 500), $config);
+            $prompt = $this->buildEnhancedPrompt($work, 1);
+            $result = $kling->textToVideo($prompt, $config);
         }
 
         $taskId = $result['task_id'] ?? null;
