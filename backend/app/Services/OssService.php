@@ -66,7 +66,8 @@ class OssService
     public function putObject(string $objectPath, string $content, string $contentType): string
     {
         $date = gmdate('D, d M Y H:i:s \G\M\T');
-        $host = "{$this->bucket}.{$this->endpoint}";
+        // endpoint 已包含 bucket 则直接使用，否则前置 bucket
+        $host = str_starts_with($this->endpoint, $this->bucket) ? $this->endpoint : "{$this->getHost()}";
         $resource = "/{$this->bucket}/{$objectPath}";
 
         // 签名
@@ -101,7 +102,7 @@ class OssService
         if ($this->cdnDomain) {
             return "https://{$this->cdnDomain}/{$objectPath}";
         }
-        return "https://{$this->bucket}.{$this->endpoint}/{$objectPath}";
+        return "https://{$this->getHost()}/{$objectPath}";
     }
 
     /**
@@ -112,7 +113,7 @@ class OssService
         if (!$this->isConfigured()) return false;
 
         $date = gmdate('D, d M Y H:i:s \G\M\T');
-        $host = "{$this->bucket}.{$this->endpoint}";
+        $host = "{$this->getHost()}";
         $resource = "/{$this->bucket}/{$objectPath}";
         $stringToSign = "DELETE\n\n\n{$date}\n{$resource}";
         $signature = base64_encode(hash_hmac('sha1', $stringToSign, $this->accessKeySecret, true));
@@ -123,5 +124,12 @@ class OssService
         ])->delete("https://{$host}/{$objectPath}");
 
         return $response->successful();
+    }
+
+    private function getHost(): string
+    {
+        return str_starts_with($this->endpoint, $this->bucket)
+            ? $this->endpoint
+            : "{$this->getHost()}";
     }
 }

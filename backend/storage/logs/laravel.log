@@ -1625,3 +1625,41 @@ Did you mean one of these?
 [2026-07-13 18:47:34] local.WARNING: Work 16: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
 [2026-07-13 18:47:34] local.INFO: Work 16 completed successfully  
 [2026-07-13 18:52:44] local.ERROR: OSS PUT failed: 403  
+[2026-07-13 18:54:59] local.ERROR: cURL error 6: Could not resolve host: xt-duanju.oss-cn-bejing.aliyuncs.com (see https://curl.se/libcurl/c/libcurl-errors.html) for https://xt-duanju.oss-cn-bejing.aliyuncs.com/test.txt {"exception":"[object] (Illuminate\\Http\\Client\\ConnectionException(code: 0): cURL error 6: Could not resolve host: xt-duanju.oss-cn-bejing.aliyuncs.com (see https://curl.se/libcurl/c/libcurl-errors.html) for https://xt-duanju.oss-cn-bejing.aliyuncs.com/test.txt at E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php:2061)
+[stacktrace]
+#0 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1110): Illuminate/Http/Client/PendingRequest->marshalConnectionException(Object(GuzzleHttp/Exception/ConnectException))
+#1 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Support/helpers.php(328): Illuminate/Http/Client/PendingRequest->Illuminate/Http/Client/{closure}(1)
+#2 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1070): retry(0, Object(Closure), 100, Object(Closure))
+#3 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(950): Illuminate/Http/Client/PendingRequest->send('PUT', 'https://xt-duan...', Array)
+#4 E:/prject/OpenCodePrject/aiduanju/backend/app/Services/OssService.php(83): Illuminate/Http/Client/PendingRequest->put('https://xt-duan...')
+#5 E:/prject/OpenCodePrject/aiduanju/backend/test_oss.php(12): App/Services/OssService->putObject('test.txt', 'Hello OSS from ...', 'text/plain')
+#6 {main}
+
+[previous exception] [object] (GuzzleHttp\\Exception\\ConnectException(code: 0): cURL error 6: Could not resolve host: xt-duanju.oss-cn-bejing.aliyuncs.com (see https://curl.se/libcurl/c/libcurl-errors.html) for https://xt-duanju.oss-cn-bejing.aliyuncs.com/test.txt at E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php:1068)
+[stacktrace]
+#0 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php(1009): GuzzleHttp/Handler/CurlFactory::createRejection(Object(GuzzleHttp/Handler/EasyHandle), Array)
+#1 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php(946): GuzzleHttp/Handler/CurlFactory::finishError(Object(GuzzleHttp/Handler/CurlHandler), Object(GuzzleHttp/Handler/EasyHandle), Object(GuzzleHttp/Handler/CurlFactory))
+#2 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/CurlHandler.php(81): GuzzleHttp/Handler/CurlFactory::finish(Object(GuzzleHttp/Handler/CurlHandler), Object(GuzzleHttp/Handler/EasyHandle), Object(GuzzleHttp/Handler/CurlFactory))
+#3 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/Proxy.php(28): GuzzleHttp/Handler/CurlHandler->__invoke(Object(GuzzleHttp/Psr7/Request), Array)
+#4 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/Proxy.php(68): GuzzleHttp/Handler/Proxy::GuzzleHttp/Handler/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#5 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Handler/Proxy.php(48): GuzzleHttp/Handler/Proxy::GuzzleHttp/Handler/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#6 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1779): GuzzleHttp/Handler/Proxy::GuzzleHttp/Handler/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#7 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1736): Illuminate/Http/Client/PendingRequest->Illuminate/Http/Client/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#8 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1722): Illuminate/Http/Client/PendingRequest->Illuminate/Http/Client/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#9 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/PrepareBodyMiddleware.php(64): Illuminate/Http/Client/PendingRequest->Illuminate/Http/Client/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#10 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Middleware.php(38): GuzzleHttp/PrepareBodyMiddleware->__invoke(Object(GuzzleHttp/Psr7/Request), Array)
+#11 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/RedirectMiddleware.php(72): GuzzleHttp/Middleware::GuzzleHttp/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#12 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Middleware.php(63): GuzzleHttp/RedirectMiddleware->__invoke(Object(GuzzleHttp/Psr7/Request), Array)
+#13 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/HandlerStack.php(75): GuzzleHttp/Middleware::GuzzleHttp/{closure}(Object(GuzzleHttp/Psr7/Request), Array)
+#14 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Client.php(1071): GuzzleHttp/HandlerStack->__invoke(Object(GuzzleHttp/Psr7/Request), Array)
+#15 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Client.php(229): GuzzleHttp/Client->transfer(Object(GuzzleHttp/Psr7/Request), Array)
+#16 E:/prject/OpenCodePrject/aiduanju/backend/vendor/guzzlehttp/guzzle/src/Client.php(259): GuzzleHttp/Client->requestAsync('PUT', Object(GuzzleHttp/Psr7/Uri), Array)
+#17 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1352): GuzzleHttp/Client->request('PUT', 'https://xt-duan...', Array)
+#18 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1072): Illuminate/Http/Client/PendingRequest->sendRequest('PUT', 'https://xt-duan...', Array)
+#19 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Support/helpers.php(328): Illuminate/Http/Client/PendingRequest->Illuminate/Http/Client/{closure}(1)
+#20 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(1070): retry(0, Object(Closure), 100, Object(Closure))
+#21 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Http/Client/PendingRequest.php(950): Illuminate/Http/Client/PendingRequest->send('PUT', 'https://xt-duan...', Array)
+#22 E:/prject/OpenCodePrject/aiduanju/backend/app/Services/OssService.php(83): Illuminate/Http/Client/PendingRequest->put('https://xt-duan...')
+#23 E:/prject/OpenCodePrject/aiduanju/backend/test_oss.php(12): App/Services/OssService->putObject('test.txt', 'Hello OSS from ...', 'text/plain')
+#24 {main}
+"} 
