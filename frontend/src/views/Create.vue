@@ -69,6 +69,13 @@ watch(() => kling.video_model, (val) => {
     kling.video_sound = m.sound ? 'on' : 'off'
   }
 })
+
+// 声音需要 pro 模式，std 不支持声音
+watch(() => kling.video_sound, (val) => {
+  if (val === 'on' && kling.video_mode === 'std') {
+    kling.video_mode = 'pro'
+  }
+})
 const workId = ref(null); let pollTimer = null
 
 onMounted(async()=>{})
