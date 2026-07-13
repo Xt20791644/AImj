@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+public/build/
+public/hot/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Uploads / Media (large files, store on OSS)
+storage/uploads/
+storage/app/public/
+public/storage/
+
+# Laravel specific
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+bootstrap/cache/*
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# StoryClaw output
+workspace/
+
+# OpenCode
+.opencode/
+.omo/
+.codegraph/
