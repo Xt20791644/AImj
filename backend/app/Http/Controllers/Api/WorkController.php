@@ -68,7 +68,11 @@ class WorkController extends Controller
         // 精细模式不自动触发Job，快速模式直接调度
         if ($mode !== 'fine') {
             $this->initTimelineSteps($work);
-            ProcessWorkJob::dispatch($work->id);
+            // 后台异步执行（Windows兼容）: 启动独立PHP进程处理Job
+            $php = PHP_BINARY;
+            $artisan = base_path('artisan');
+            $cmd = "start /B \"\" \"{$php}\" \"{$artisan}\" kling:process {$work->id} > NUL 2>&1";
+            pclose(popen($cmd, 'r'));
         } else {
             // 精细模式：标记剧本已完成（用户在前端已确认）
             $this->updateTimeline($work, 'script', 'completed', '剧本已确认');

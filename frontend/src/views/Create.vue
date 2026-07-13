@@ -256,6 +256,7 @@ onUnmounted(()=>stopPolling())
           <span :class="{done:genProgress>=100}">导出完成</span>
         </div>
         <p class="pm-hint">可关闭此页面，稍后在作品广场查看</p>
+        <p class="pm-eta mono" v-if="genProgress>0&&genProgress<100">⏱ 预计剩余 {{ estimatedTime }} 秒</p>
       </div>
     </div>
   </div>
