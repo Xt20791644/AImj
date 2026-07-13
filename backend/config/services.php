@@ -8,7 +8,13 @@ return [
         'api_base' => env('KLING_API_BASE', 'https://api.klingai.com'),
     ],
 
-    // Azure TTS
+    // CosyVoice TTS (阿里云百炼)
+    'cosyvoice' => [
+        'api_key' => env('COSYVOICE_API_KEY'),
+        'api_base' => env('COSYVOICE_API_BASE', 'https://dashscope.aliyuncs.com/api/v1'),
+    ],
+
+    // Azure TTS (备选，已替换为CosyVoice)
     'azure_speech' => [
         'key' => env('AZURE_SPEECH_KEY'),
         'region' => env('AZURE_SPEECH_REGION', 'eastasia'),

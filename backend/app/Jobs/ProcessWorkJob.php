@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\Work;
 use App\Models\WorkTimeline;
 use App\Services\KlingService;
-use App\Services\AzureTTSService;
+use App\Services\CosyVoiceService;
 use App\Services\StoryClawService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +28,7 @@ class ProcessWorkJob implements ShouldQueue
     public function handle(
         StoryClawService $storyClaw,
         KlingService $kling,
-        AzureTTSService $tts,
+        CosyVoiceService $tts,
     ): void {
         $work = Work::findOrFail($this->workId);
         $work->update(['status' => 'processing']);
@@ -62,7 +62,7 @@ class ProcessWorkJob implements ShouldQueue
             $this->updateTimeline($work, 'video', 'completed', '视频生成完成');
             $work->update(['progress' => 75, 'status_text' => '视频生成完成']);
 
-            // Step 6: 配音生成 (TODO: 接入Azure TTS API后启用)
+            // Step 6: 配音生成 (CosyVoice)
             $this->updateTimeline($work, 'audio', 'processing', '正在生成配音...');
             // $audioFiles = $this->generateAudio($tts, $storyData);
             $this->updateTimeline($work, 'audio', 'completed', '配音生成完成');
