@@ -35,6 +35,13 @@ class ProcessWorkJob implements ShouldQueue
         $meta = $work->meta ?? [];
         $config = $meta['kling_config'] ?? KlingConfig::defaults();
 
+        // 声音需要 pro 模式：std 模式不支持声音
+        if (($config['video_sound'] ?? 'off') === 'on' && ($config['video_mode'] ?? 'std') === 'std') {
+            $config['video_mode'] = 'pro';
+            $meta['kling_config'] = $config;
+            Log::info("Work {$this->workId}: Auto-upgraded video mode to pro for sound support");
+        }
+
         try {
             // Step 1-3: Script/Characters/Storyboard (text pipeline)
             if ($this->startFrom === 'all') {
