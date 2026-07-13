@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Services\OssService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,7 +28,7 @@ class ProcessWorkJob implements ShouldQueue
         public string $startFrom = 'all'
     ) {}
 
-    public function handle(KlingService $kling, CosyVoiceService $tts): void
+    public function handle(KlingService $kling, CosyVoiceService $tts, OssService $oss): void
     {
         $work = Work::findOrFail($this->workId);
         $work->update(['status' => 'processing']);
@@ -95,16 +96,24 @@ class ProcessWorkJob implements ShouldQueue
             }
             $work->update(['progress' => 90]);
 
-            // Step 7: 合成完成
+            // Step 7: 上传到 OSS（如果已配置）
+            $ossVideoUrl = $videoUrl;
+            $ossCoverUrl = $imageUrls[0] ?? null;
+            if ($oss->isConfigured() && $videoUrl) {
+                $this->runStep($work, 'compose', 'processing', '正在上传到云存储...');
+                $ossV = $oss->uploadFromUrl($videoUrl, "works/{$work->id}/output.mp4");
+                if ($ossV) $ossVideoUrl = $ossV;
+                if ($ossCoverUrl) {
+                    $ossC = $oss->uploadFromUrl($ossCoverUrl, "works/{$work->id}/cover.jpg");
+                    if ($ossC) $ossCoverUrl = $ossC;
+                }
+            }
             $this->runStep($work, 'compose', 'completed', '创作完成');
             $work->update([
-                'progress' => 100,
-                'status' => 'completed',
-                'status_text' => '创作完成',
-                'output_video' => $videoUrl,
-                'output_cover' => $imageUrls[0] ?? null,
-                'duration' => (int)($config['video_duration'] ?? 5),
-                'meta' => $meta,
+                'progress' => 100, 'status' => 'completed', 'status_text' => '创作完成',
+                'output_video' => $ossVideoUrl,
+                'output_cover' => $ossCoverUrl,
+                'duration' => (int)($config['video_duration'] ?? 5), 'meta' => $meta,
             ]);
 
             Log::info("Work {$work->id} completed successfully");

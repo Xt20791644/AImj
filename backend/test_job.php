@@ -9,7 +9,7 @@ try {
 $id = $work->id;
 echo "Running job for work ID: {$id}\n";
 $job = new App\Jobs\ProcessWorkJob($id);
-    $job->handle(app(App\Services\KlingService::class), app(App\Services\CosyVoiceService::class));
+    $job->handle(app(App\Services\KlingService::class), app(App\Services\CosyVoiceService::class), app(App\Services\OssService::class));
     echo "Job completed!\n";
 } catch (\Throwable $e) {
     echo "ERROR: " . $e->getMessage() . "\n";
