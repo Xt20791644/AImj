@@ -6,6 +6,8 @@ use App\Models\Work;
 use App\Models\WorkTimeline;
 use App\Services\KlingService;
 use App\Services\CosyVoiceService;
+use App\Services\OssService;
+use App\Services\StoryPipelineService;
 use App\Services\KlingConfig;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +30,7 @@ class ProcessWorkJob implements ShouldQueue
         public string $startFrom = 'all'
     ) {}
 
-    public function handle(KlingService $kling, CosyVoiceService $tts, OssService $oss): void
+    public function handle(KlingService $kling, CosyVoiceService $tts, OssService $oss, StoryPipelineService $pipeline): void
     {
         $work = Work::findOrFail($this->workId);
         $work->update(['status' => 'processing']);
@@ -44,11 +46,25 @@ class ProcessWorkJob implements ShouldQueue
         }
 
         try {
-            // Step 1-3: Script/Characters/Storyboard (text pipeline)
+            // Step 0: AI文本管线 — 扩展剧本 + 分镜 + 角色提取
+            $this->runStep($work, 'script', 'processing', '正在AI创作剧本...');
+            $pipelineResult = $pipeline->process($work->title, $work->content, $work->style);
+            $meta['script'] = $pipelineResult['script'];
+            $meta['scenes'] = $pipelineResult['scenes'];
+            $meta['characters'] = $pipelineResult['characters'];
+            $meta['prompts'] = $pipelineResult['prompts'];
+            $this->sleep(2);
+            $this->runStep($work, 'script', 'completed', '剧本创作完成（' . count($pipelineResult['scenes']) . '场戏）');
+            $work->update(['progress' => 15, 'meta' => $meta]);
+
             if ($this->startFrom === 'all') {
-                $this->sleep(1); $this->runStep($work, 'script', 'completed', '剧本分析完成'); $work->update(['progress' => 15]);
-                $this->sleep(1); $this->runStep($work, 'characters', 'completed', '角色提取完成'); $work->update(['progress' => 30]);
-                $this->sleep(1); $this->runStep($work, 'storyboard', 'completed', '分镜生成完成'); $work->update(['progress' => 45]);
+                // 快速模式：跳过script，直接走characters+storyboard
+                $this->sleep(1);
+                $this->runStep($work, 'characters', 'completed', '角色提取完成（' . count($pipelineResult['characters']) . '个角色）');
+                $work->update(['progress' => 30]);
+                $this->sleep(1);
+                $this->runStep($work, 'storyboard', 'completed', '分镜生成完成（' . count($pipelineResult['scenes']) . '个镜头）');
+                $work->update(['progress' => 45]);
             }
 
             // Step 4: 图片生成 (调用可灵 + 轮询拿结果)
@@ -156,11 +172,13 @@ class ProcessWorkJob implements ShouldQueue
      */
     private function generateAndPollImages(KlingService $kling, Work $work, array $config): array
     {
-        $n = max(1, min(3, (int)($config['image_n'] ?? 1)));
+        $prompts = $work->meta['prompts'] ?? [];
+        $n = max(1, min(3, (int)($config['image_n'] ?? 1), count($prompts)));
         $urls = [];
 
         for ($i = 0; $i < $n; $i++) {
-            $prompt = $this->buildEnhancedPrompt($work, $i + 1);
+            // 使用管线生成的优化提示词
+            $prompt = $prompts[$i]['prompt'] ?? $this->buildEnhancedPrompt($work, $i + 1);
             $this->runStep($work, 'images', 'processing', "正在生成第 " . ($i + 1) . " / {$n} 张图片...");
 
             $result = $kling->generateImage($prompt, $config);

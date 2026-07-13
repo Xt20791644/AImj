@@ -20,7 +20,8 @@ class KlingProcessCommand extends Command
             $job->handle(
                 app(\App\Services\KlingService::class),
                 app(\App\Services\CosyVoiceService::class),
-                app(\App\Services\OssService::class)
+                app(\App\Services\OssService::class),
+                app(\App\Services\StoryPipelineService::class)
             );
             $this->info("Work {$workId} completed successfully");
         } catch (\Throwable $e) {
