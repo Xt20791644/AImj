@@ -7,6 +7,7 @@ use App\Models\CreditTransaction;
 use App\Models\User;
 use App\Models\Work;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -56,5 +57,35 @@ class AdminController extends Controller
             ->paginate(30);
 
         return response()->json($transactions);
+    }
+
+    /**
+     * 获取指定用户的所有作品
+     */
+    public function userWorks($id)
+    {
+        $user = User::findOrFail($id);
+        $works = Work::where('user_id', $id)->with('timelines')->latest()->get();
+
+        return response()->json([
+            'user' => $user->only(['id', 'name', 'email']),
+            'works' => $works,
+        ]);
+    }
+
+    /**
+     * 管理员重置用户密码
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|string|min:6|max:255',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json(['message' => "用户 {$user->name} 的密码已重置"]);
     }
 }
