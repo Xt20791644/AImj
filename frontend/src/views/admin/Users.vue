@@ -5,6 +5,7 @@ import api from '../../api'
 
 const users = ref([]); const loading = ref(true)
 const worksDialog = ref(false); const worksUser = ref({}); const userWorks = ref([])
+const adminShowDetail = ref(false); const adminViewing = ref(null)
 const passwordDialog = ref(false); const passwordUser = ref({}); const newPassword = ref('')
 
 async function fetchUsers() { loading.value=true;try{const r=await api.get('/admin/users');users.value=r.data||r}catch(e){}loading.value=false}
@@ -15,7 +16,9 @@ async function openWorks(user){try{const r=await api.get(`/admin/users/${user.id
 function openPassword(user){passwordUser.value=user;newPassword.value='';passwordDialog.value=true}
 async function handleResetPassword(){if(!newPassword.value||newPassword.value.length<6){ElMessage.warning('密码至少6位');return};try{const r=await api.post(`/admin/users/${passwordUser.value.id}/password`,{password:newPassword.value});ElMessage.success(r.message||'已重置');passwordDialog.value=false}catch(e){ElMessage.error(e.response?.data?.message||'失败')}}
 function formatDate(d){if(!d)return '';const t=new Date(d);return t.toLocaleDateString('zh-CN')+' '+t.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+function styleLabel(s){const m={realistic:'真人写实',anime:'日系动画','3d':'3D动画',cyberpunk:'赛博朋克'};return m[s]||s}
 function formatMeta(m){if(!m)return'无';try{return typeof m==='string'?JSON.stringify(JSON.parse(m),null,2):JSON.stringify(m,null,2)}catch{return String(m)}}
+function openAdminVideo(w){adminViewing.value=w;adminShowDetail.value=true}
 </script>
 
 <template>
@@ -36,16 +39,25 @@ function formatMeta(m){if(!m)return'无';try{return typeof m==='string'?JSON.str
 
     <el-dialog v-model="worksDialog" :title="`${worksUser.name} 的作品`" width="800px" top="5vh">
       <el-empty v-if="userWorks.length===0" description="暂无作品"/>
-      <div v-else class="works-list">
-        <div v-for="w in userWorks" :key="w.id" class="work-item glass-panel">
-          <div class="wi-head"><h4>{{ w.title }}</h4><el-tag :type="w.status==='completed'?'success':w.status==='failed'?'danger':'warning'" size="small">{{ w.status }}</el-tag></div>
-          <div class="wi-meta mono"><span>风格:{{ w.style }}</span><span>进度:{{ w.progress }}%</span><span>时长:{{ w.duration||0 }}秒</span><span>{{ formatDate(w.created_at) }}</span></div>
-          <div class="wi-section" v-if="w.meta?.script||w.content"><span class="wi-label">📝 故事/剧本</span><pre class="wi-text">{{ w.meta?.script||w.content }}</pre></div>
-          <div class="wi-section" v-if="w.meta?.kling_config"><span class="wi-label">⚙️ 生成配置</span><pre class="wi-text">{{ formatMeta(w.meta.kling_config) }}</pre></div>
-          <div class="wi-timeline" v-if="w.timelines?.length"><span class="wi-label">📊 生成过程</span>
-            <div v-for="t in w.timelines" :key="t.step" class="tl-row"><span class="tl-step mono">{{ t.step }}</span><el-tag :type="t.status==='completed'?'success':t.status==='failed'?'danger':'info'" size="small">{{ t.status }}</el-tag><span class="tl-msg">{{ t.message }}</span></div>
+      <div v-else class="admin-works-grid">
+        <div v-for="w in userWorks" :key="w.id" class="aw-card glass-panel" @click="openAdminVideo(w)">
+          <div class="aw-cover">
+            <img v-if="w.output_cover" :src="w.output_cover" class="aw-img"/>
+            <span v-else class="aw-icon">🎬</span>
+            <div class="aw-dur" v-if="w.duration">{{ w.duration }}s</div>
           </div>
+          <div class="aw-info"><h4>{{ w.title }}</h4><span class="aw-date">{{ formatDate(w.created_at) }}</span></div>
         </div>
+      </div>
+    </el-dialog>
+
+    <el-dialog v-model="adminShowDetail" :title="adminViewing?.title" width="700px" top="5vh" @close="adminViewing=null">
+      <div v-if="adminViewing">
+        <video v-if="adminViewing.output_video" :src="adminViewing.output_video" controls style="width:100%;max-height:450px;border-radius:var(--radius)"/>
+        <div v-else class="no-video">🎬 视频暂不可用</div>
+        <div class="detail-meta" style="margin-top:12px;display:flex;gap:16px;font-size:12px;color:var(--text-tertiary);padding:12px 0;border-bottom:1px solid var(--border-subtle)"><span>风格: {{ styleLabel(adminViewing.style) }}</span><span>时长: {{ adminViewing.duration||0 }}秒</span><span>{{ formatDate(adminViewing.created_at) }}</span></div>
+        <div v-if="adminViewing.meta?.script||adminViewing.content" style="margin-top:12px"><span style="font-size:12px;color:var(--accent);font-weight:600">📝 故事/剧本</span><pre style="background:var(--bg-elevated);padding:12px;border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:6px">{{ adminViewing.meta?.script||adminViewing.content }}</pre></div>
+        <div v-if="adminViewing.meta?.kling_config" style="margin-top:12px"><span style="font-size:12px;color:var(--accent);font-weight:600">⚙️ 生成配置</span><pre style="background:var(--bg-elevated);padding:12px;border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:6px">{{ formatMeta(adminViewing.meta.kling_config) }}</pre></div>
       </div>
     </el-dialog>
 
@@ -65,5 +77,13 @@ function formatMeta(m){if(!m)return'无';try{return typeof m==='string'?JSON.str
 .wi-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-tertiary);margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)}
 .wi-section{margin-top:12px}.wi-label{display:block;font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px}
 .wi-text{background:var(--bg-elevated);padding:12px;border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);white-space:pre-wrap;max-height:200px;overflow-y:auto}
-.wi-timeline{margin-top:12px}.tl-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-subtle)}.tl-step{color:var(--accent);min-width:80px}.tl-msg{color:var(--text-secondary);flex:1}
+.admin-works-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.aw-card{cursor:pointer;overflow:hidden;padding:0;transition:all var(--transition)}
+.aw-card:hover{transform:translateY(-2px);border-color:var(--border-accent)!important}
+.aw-cover{height:140px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);position:relative}
+.aw-img{width:100%;height:100%;object-fit:cover}
+.aw-icon{font-size:36px;color:var(--text-tertiary)}
+.aw-dur{position:absolute;bottom:6px;right:6px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;font-family:var(--font-mono)}
+.aw-info{padding:10px 12px}.aw-info h4{font-size:13px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aw-date{font-size:11px;color:var(--text-tertiary)}
+.no-video{height:300px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border-radius:var(--radius);color:var(--text-tertiary);font-size:24px}
 </style>

@@ -1591,3 +1591,13 @@ Did you mean one of these?
 [2026-07-13 17:32:06] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"8ae8b97f-49c0-97c1-ba47-95ba7766c088"}} 
 [2026-07-13 17:32:06] local.WARNING: Work 10: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
 [2026-07-13 17:32:06] local.INFO: Work 10 completed successfully  
+[2026-07-13 17:34:47] local.INFO: Work 11: Auto-upgraded video mode to pro for sound support  
+[2026-07-13 17:36:19] local.INFO: Work 11: Generated 3 images  
+[2026-07-13 17:37:52] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"5c801885-bee3-98f3-95d5-9122b9147450"}} 
+[2026-07-13 17:37:52] local.WARNING: Work 11: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 17:37:52] local.INFO: Work 11 completed successfully  
+[2026-07-13 17:37:54] local.INFO: Work 12: Auto-upgraded video mode to pro for sound support  
+[2026-07-13 17:39:26] local.INFO: Work 12: Generated 3 images  
+[2026-07-13 17:40:33] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"7d67cc04-d8f3-9b19-bf2c-f037968bb60d"}} 
+[2026-07-13 17:40:33] local.WARNING: Work 12: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 17:40:33] local.INFO: Work 12 completed successfully  

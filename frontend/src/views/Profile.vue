@@ -32,6 +32,7 @@ async function playWork(work) {
 }
 
 function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
+function styleLabel(s) { const m={realistic:'真人写实',anime:'日系动画','3d':'3D动画',cyberpunk:'赛博朋克'}; return m[s]||s }
 </script>
 
 <template>
@@ -80,9 +81,7 @@ function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLo
           <video v-if="viewing.output_video" :src="viewing.output_video" controls style="width:100%;max-height:500px;border-radius:var(--radius)" />
           <div v-else class="no-video">🎬 视频暂不可用</div>
         </div>
-        <div class="detail-meta mono"><span>风格:{{ viewing.style }}</span><span>时长:{{ viewing.duration||0 }}秒</span><span>{{ formatDate(viewing.created_at) }}</span></div>
-        <div class="detail-section" v-if="viewing.meta?.script||viewing.content"><span class="ds-label">📝 故事</span><pre class="ds-text">{{ viewing.meta?.script||viewing.content }}</pre></div>
-        <div class="detail-section" v-if="viewing.meta?.kling_config"><span class="ds-label">⚙️ 配置</span><pre class="ds-text">{{ JSON.stringify(viewing.meta.kling_config,null,2) }}</pre></div>
+        <div class="detail-meta"><span>风格: {{ styleLabel(viewing.style) }}</span><span>时长: {{ viewing.duration||0 }}秒</span><span>{{ formatDate(viewing.created_at) }}</span></div>
       </div>
     </el-dialog>
   </div>
