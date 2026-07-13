@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useCreditStore } from '../stores/credit'
@@ -21,11 +21,17 @@ const imageModels = [
   {value:'kling-v1',label:'Kling V1 (基础)'},{value:'kling-image-o1',label:'Kling Image O1 (专业4K)'},
 ]
 const videoModels = [
-  {value:'kling-v3',label:'Kling V3 (旗舰)'},{value:'kling-v3-omni',label:'Kling V3 Omni'},
-  {value:'kling-v2-6',label:'Kling V2.6 (推荐·运镜)'},{value:'kling-v2-5-turbo',label:'Kling V2.5 Turbo (快速)'},
-  {value:'kling-v2-1-master',label:'Kling V2.1 Master'},{value:'kling-v2-1',label:'Kling V2.1'},
-  {value:'kling-v2-master',label:'Kling V2 Master'},{value:'kling-video-o1',label:'Kling Video O1 (专业)'},
-  {value:'kling-v1-6',label:'Kling V1.6'},{value:'kling-v1-5',label:'Kling V1.5'},{value:'kling-v1',label:'Kling V1'},
+  {value:'kling-v3',label:'Kling V3 (旗舰)',sound:true},
+  {value:'kling-v3-omni',label:'Kling V3 Omni',sound:true,voice:true},
+  {value:'kling-v2-6',label:'Kling V2.6 (推荐·运镜)',sound:true},
+  {value:'kling-video-o1',label:'Kling Video O1 (专业)',sound:true},
+  {value:'kling-v2-5-turbo',label:'Kling V2.5 Turbo (快速)',sound:false},
+  {value:'kling-v2-1-master',label:'Kling V2.1 Master',sound:false},
+  {value:'kling-v2-1',label:'Kling V2.1',sound:false},
+  {value:'kling-v2-master',label:'Kling V2 Master',sound:false},
+  {value:'kling-v1-6',label:'Kling V1.6',sound:false},
+  {value:'kling-v1-5',label:'Kling V1.5',sound:false},
+  {value:'kling-v1',label:'Kling V1',sound:false},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [
@@ -52,6 +58,13 @@ const generatedImages = ref([])
 const analysis = ref(null)
 const warnings = ref([])
 const loading = ref(false); const recommendLoading = ref(false)
+
+// 当前视频模型是否支持声音
+const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
+watch(() => kling.video_model, (val) => {
+  const m = videoModels.find(x => x.value === val)
+  if (m && !m.sound) kling.video_sound = 'off'
+})
 const workId = ref(null); let pollTimer = null
 
 onMounted(async()=>{})
@@ -157,7 +170,7 @@ onUnmounted(()=>stopPolling())
       <div v-if="activeStep===2" class="step-block glass-panel glow">
         <div class="block-head"><span class="block-num">03</span><h2>视频合成</h2><el-button size="small" @click="aiRecommend" :loading="recommendLoading" style="margin-left:auto">🤖 AI 推荐配置</el-button></div>
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"><span style="display:flex;align-items:center;gap:8px">{{ m.label }}<span v-if="m.sound" style="color:var(--accent);font-size:12px">🔊 有声</span><span v-else style="color:var(--text-tertiary);font-size:12px">🔇 无声</span></span></el-option></el-select></el-form-item></el-col>
           <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%" ><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
           <el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
           <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
@@ -198,7 +211,7 @@ onUnmounted(()=>stopPolling())
         </div>
         <div class="config-group"><h4>🎥 视频配置</h4>
           <el-row :gutter="12">
-            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig" ><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig" ><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"><span style="display:flex;align-items:center;gap:8px">{{ m.label }}<span v-if="m.sound" style="color:var(--accent);font-size:12px">🔊 有声</span><span v-else style="color:var(--text-tertiary);font-size:12px">🔇 无声</span></span></el-option></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%" ><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig" ><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
