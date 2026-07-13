@@ -13,7 +13,36 @@ const steps = [{t:'故事剧本',d:'输入大纲, AI生成剧本可编辑'},{t:'
 const story = reactive({ title: '', content: '', style: 'realistic' })
 const script = ref(''); const scriptEditing = ref(false); const scriptGenerated = ref(false)
 
-const options = ref(null)
+// 内嵌选项数据（不依赖后端API）
+const imageModels = [
+  {value:'kling-v3',label:'Kling V3 (旗舰·推荐)'},{value:'kling-v3-omni',label:'Kling V3 Omni (全能)'},
+  {value:'kling-v2-1',label:'Kling V2.1 (稳定)'},{value:'kling-v2-new',label:'Kling V2 New'},
+  {value:'kling-v2',label:'Kling V2'},{value:'kling-v1-5',label:'Kling V1.5 (人脸参考)'},
+  {value:'kling-v1',label:'Kling V1 (基础)'},{value:'kling-image-o1',label:'Kling Image O1 (专业4K)'},
+]
+const videoModels = [
+  {value:'kling-v3',label:'Kling V3 (旗舰)'},{value:'kling-v3-omni',label:'Kling V3 Omni'},
+  {value:'kling-v2-6',label:'Kling V2.6 (推荐·运镜)'},{value:'kling-v2-5-turbo',label:'Kling V2.5 Turbo (快速)'},
+  {value:'kling-v2-1-master',label:'Kling V2.1 Master'},{value:'kling-v2-1',label:'Kling V2.1'},
+  {value:'kling-v2-master',label:'Kling V2 Master'},{value:'kling-video-o1',label:'Kling Video O1 (专业)'},
+  {value:'kling-v1-6',label:'Kling V1.6'},{value:'kling-v1-5',label:'Kling V1.5'},{value:'kling-v1',label:'Kling V1'},
+]
+const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
+const aspectRatios = [
+  {value:'9:16',label:'9:16 竖屏(抖音·推荐)'},{value:'16:9',label:'16:9 横屏'},
+  {value:'1:1',label:'1:1 方形'},{value:'4:3',label:'4:3 标准'},{value:'3:4',label:'3:4 竖屏'},
+  {value:'3:2',label:'3:2 宽屏'},{value:'2:3',label:'2:3 竖长'},{value:'auto',label:'自动'},
+]
+const videoModes = [{value:'std',label:'标准 720P'},{value:'pro',label:'专业 1080P'},{value:'4k',label:'4K 超清'}]
+const durations = [
+  {value:'3',label:'3秒'},{value:'4',label:'4秒'},{value:'5',label:'5秒'},{value:'6',label:'6秒'},
+  {value:'7',label:'7秒'},{value:'8',label:'8秒'},{value:'9',label:'9秒'},{value:'10',label:'10秒'},
+  {value:'11',label:'11秒'},{value:'12',label:'12秒'},{value:'13',label:'13秒'},{value:'14',label:'14秒'},{value:'15',label:'15秒'},
+]
+const cameraTypes = [
+  {value:'simple',label:'自定义运镜'},{value:'down_back',label:'下后拉远'},
+  {value:'forward_up',label:'前上推进'},{value:'right_turn_forward',label:'右转前进'},{value:'left_turn_forward',label:'左转前进'},
+]
 const kling = reactive({
   image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:3,
   video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'off',
@@ -25,7 +54,7 @@ const warnings = ref([])
 const loading = ref(false); const recommendLoading = ref(false)
 const workId = ref(null); let pollTimer = null
 
-onMounted(async()=>{try{const{data}=await api.get('/kling/options');options.value=data}catch(e){}})
+onMounted(async()=>{})
 
 // AI 推荐配置
 async function aiRecommend() {
@@ -109,9 +138,9 @@ onUnmounted(()=>stopPolling())
         <div class="block-head"><span class="block-num">02</span><h2>图片生成</h2><el-button size="small" @click="aiRecommend" :loading="recommendLoading" style="margin-left:auto">🤖 AI 推荐配置</el-button></div>
         <div v-if="!generatedImages.length">
           <el-row :gutter="16">
-            <el-col :span="8"><el-form-item label="生成模型"><el-select v-model="kling.image_model" size="large" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(m,k) in options.image_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_resolutions" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="8"><el-form-item label="生成模型"><el-select v-model="kling.image_model" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="m in imageModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" ><el-option v-for="r in resolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="large" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="large" style="width:100%"/></el-form-item></el-col>
           </el-row>
           <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
@@ -128,14 +157,14 @@ onUnmounted(()=>stopPolling())
       <div v-if="activeStep===2" class="step-block glass-panel glow">
         <div class="block-head"><span class="block-num">03</span><h2>视频合成</h2><el-button size="small" @click="aiRecommend" :loading="recommendLoading" style="margin-left:auto">🤖 AI 推荐配置</el-button></div>
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(m,k) in options.video_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
-          <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.video_modes" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
-          <el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(l,v) in options.video_durations" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
-          <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+          <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%" ><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+          <el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
+          <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
           <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关"/></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" v-if="options"><el-option v-for="(l,v) in options.camera_types" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" ><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
         <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
@@ -161,18 +190,18 @@ onUnmounted(()=>stopPolling())
       <div class="config-section">
         <div class="config-group"><h4>🖼️ 图片配置</h4>
           <el-row :gutter="12">
-            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.image_model" size="small" style="width:100%" v-if="options"><el-option v-for="(m,k) in options.image_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="分辨率"><el-select v-model="kling.image_resolution" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_resolutions" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.image_model" size="small" style="width:100%" ><el-option v-for="m in imageModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="分辨率"><el-select v-model="kling.image_resolution" size="small" style="width:100%" ><el-option v-for="r in resolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="small" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="small" style="width:100%"/></el-form-item></el-col>
           </el-row>
         </div>
         <div class="config-group"><h4>🎥 视频配置</h4>
           <el-row :gutter="12">
-            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(m,k) in options.video_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
-            <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.video_modes" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
-            <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(l,v) in options.video_durations" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig" ><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+            <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%" ><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+            <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig" ><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small"/></el-form-item></el-col>
           </el-row>
         </div>
