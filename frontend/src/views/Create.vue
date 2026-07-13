@@ -65,7 +65,9 @@ const genStatus = ref('')
 const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
 watch(() => kling.video_model, (val) => {
   const m = videoModels.find(x => x.value === val)
-  if (m && !m.sound) kling.video_sound = 'off'
+  if (m) {
+    kling.video_sound = m.sound ? 'on' : 'off'
+  }
 })
 const workId = ref(null); let pollTimer = null
 
@@ -178,7 +180,7 @@ onUnmounted(()=>stopPolling())
           <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关"/></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" ><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
@@ -217,7 +219,7 @@ onUnmounted(()=>stopPolling())
             <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%" ><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig" ><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
-            <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small"/></el-form-item></el-col>
+            <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
           </el-row>
         </div>
       </div>
