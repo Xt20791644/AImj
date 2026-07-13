@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProcessWorkJob implements ShouldQueue
 {
@@ -23,7 +24,7 @@ class ProcessWorkJob implements ShouldQueue
 
     public function __construct(
         public int $workId,
-        public string $startFrom = 'all' // 'all' | 'video'
+        public string $startFrom = 'all'
     ) {}
 
     public function handle(KlingService $kling, CosyVoiceService $tts): void
@@ -35,111 +36,164 @@ class ProcessWorkJob implements ShouldQueue
         $config = $meta['kling_config'] ?? KlingConfig::defaults();
 
         try {
+            // Step 1-3: Script/Characters/Storyboard (text pipeline)
             if ($this->startFrom === 'all') {
-                // 快速模式：全流程
-                $this->runStep($work, 'script', 'processing', '正在分析故事结构...');
-                $this->sleep(1);
-                $this->runStep($work, 'script', 'completed', '剧本分析完成');
-                $work->update(['progress' => 15]);
-
-                $this->runStep($work, 'characters', 'processing', '正在提取角色...');
-                $this->sleep(1);
-                $this->runStep($work, 'characters', 'completed', '角色提取完成');
-                $work->update(['progress' => 30]);
-
-                $this->runStep($work, 'storyboard', 'processing', '正在生成分镜脚本...');
-                $this->sleep(1);
-                $this->runStep($work, 'storyboard', 'completed', '分镜生成完成');
-                $work->update(['progress' => 45]);
-
-                $this->runStep($work, 'images', 'processing', '正在生成画面...');
-                try {
-                    $this->generateImages($kling, $work, $config);
-                    $this->runStep($work, 'images', 'completed', '画面生成完成');
-                } catch (\Exception $e) {
-                    Log::warning('Image generation failed, continuing: ' . $e->getMessage());
-                    $this->runStep($work, 'images', 'completed', '画面生成跳过（API余额不足）');
-                }
-                $work->update(['progress' => 60]);
+                $this->sleep(1); $this->runStep($work, 'script', 'completed', '剧本分析完成'); $work->update(['progress' => 15]);
+                $this->sleep(1); $this->runStep($work, 'characters', 'completed', '角色提取完成'); $work->update(['progress' => 30]);
+                $this->sleep(1); $this->runStep($work, 'storyboard', 'completed', '分镜生成完成'); $work->update(['progress' => 45]);
             }
 
-            // 视频生成（快速模式和精细模式都执行）
-            $this->runStep($work, 'video', 'processing', '正在生成视频片段...');
+            // Step 4: 图片生成 (调用可灵 + 轮询拿结果)
+            $imageUrls = [];
+            $this->runStep($work, 'images', 'processing', '正在生成画面...');
             try {
-                $this->generateVideos($kling, $work, $config, $meta);
-                $this->runStep($work, 'video', 'completed', '视频生成完成');
+                $imageUrls = $this->generateAndPollImages($kling, $work, $config);
+                $meta['image_results'] = $imageUrls;
+                $this->runStep($work, 'images', 'completed', '画面生成完成');
+                Log::info("Work {$work->id}: Generated " . count($imageUrls) . " images");
             } catch (\Exception $e) {
-                Log::warning('Video generation failed: ' . $e->getMessage());
-                $this->runStep($work, 'video', 'completed', '视频生成跳过（API余额不足）');
+                Log::warning("Work {$work->id}: Image generation failed - " . $e->getMessage());
+                $this->runStep($work, 'images', 'completed', '画面生成跳过（API失败或余额不足）');
             }
-            $work->update(['progress' => 75]);
+            $work->update(['progress' => 60, 'meta' => $meta]);
 
-            // 配音
+            // Step 5: 视频生成 (用生成的图片做图生视频)
+            $videoUrl = null;
+            $this->runStep($work, 'video', 'processing', '正在生成视频...');
+            try {
+                if (!empty($imageUrls)) {
+                    $videoUrl = $this->generateAndPollVideo($kling, $work, $config, $imageUrls);
+                    $meta['video_results'] = [$videoUrl];
+                    $this->runStep($work, 'video', 'completed', '视频生成完成');
+                } elseif (!empty($config['video_model'])) {
+                    $videoUrl = $this->generateAndPollVideo($kling, $work, $config, []);
+                    $meta['video_results'] = [$videoUrl];
+                    $this->runStep($work, 'video', 'completed', '视频生成完成(文生视频)');
+                }
+            } catch (\Exception $e) {
+                Log::warning("Work {$work->id}: Video generation failed - " . $e->getMessage());
+                $this->runStep($work, 'video', 'completed', '视频生成跳过（API失败或余额不足）');
+            }
+            $work->update(['progress' => 80, 'meta' => $meta]);
+
+            // Step 6: 配音
             $this->runStep($work, 'audio', 'processing', '正在生成配音...');
             try {
                 $script = $meta['script'] ?? $work->content;
                 $tts->synthesize(mb_substr($script, 0, 200));
                 $this->runStep($work, 'audio', 'completed', '配音生成完成');
             } catch (\Exception $e) {
-                Log::warning('TTS failed: ' . $e->getMessage());
+                Log::warning("Work {$work->id}: TTS failed - " . $e->getMessage());
                 $this->runStep($work, 'audio', 'completed', '配音跳过（API未配置）');
             }
             $work->update(['progress' => 90]);
 
-            // 合成
-            $this->runStep($work, 'compose', 'processing', '正在合成导出...');
-            $this->sleep(1);
-            $this->runStep($work, 'compose', 'completed', '视频合成完成');
+            // Step 7: 合成完成
+            $this->runStep($work, 'compose', 'completed', '创作完成');
             $work->update([
-                'progress' => 100, 'status' => 'completed',
-                'status_text' => '创作完成', 'duration' => (int)($config['video_duration'] ?? 5),
+                'progress' => 100,
+                'status' => 'completed',
+                'status_text' => '创作完成',
+                'output_video' => $videoUrl,
+                'output_cover' => $imageUrls[0] ?? null,
+                'duration' => (int)($config['video_duration'] ?? 5),
+                'meta' => $meta,
             ]);
 
-            Log::info("Work {$work->id} completed");
+            Log::info("Work {$work->id} completed successfully");
         } catch (\Throwable $e) {
             Log::error("Work {$work->id} failed: " . $e->getMessage());
             $work->update(['status' => 'failed', 'status_text' => '失败: ' . $e->getMessage()]);
         }
     }
 
-    private function generateImages(KlingService $kling, Work $work, array $config): void
+    /**
+     * 生成图片并轮询获取结果 URL
+     */
+    private function generateAndPollImages(KlingService $kling, Work $work, array $config): array
     {
         $n = max(1, min(3, (int)($config['image_n'] ?? 1)));
-        $results = [];
+        $urls = [];
+        $script = $work->meta['script'] ?? $work->content;
+        $promptBase = mb_substr($script, 0, 500);
+
         for ($i = 0; $i < $n; $i++) {
-            $prompt = "短剧《{$work->title}》场景图，{$work->style}风格";
+            $prompt = "短剧《{$work->title}》场景" . ($i + 1) . ": {$promptBase}，{$work->style}风格";
+            $this->runStep($work, 'images', 'processing', "正在生成第 " . ($i + 1) . " / {$n} 张图片...");
+
             $result = $kling->generateImage($prompt, $config);
-            $results[] = $result;
-            $this->sleep(3);
+            $taskId = $result['task_id'] ?? null;
+
+            if ($taskId) {
+                $imageUrl = $this->pollKlingTask($kling, 'image', $taskId, 60);
+                if ($imageUrl) {
+                    $urls[] = $imageUrl;
+                }
+            }
+            if ($i < $n - 1) $this->sleep(3);
         }
-        $meta = $work->meta ?? [];
-        $meta['image_results'] = $results;
-        $work->update(['meta' => $meta]);
+
+        return $urls;
     }
 
-    private function generateVideos(KlingService $kling, Work $work, array $config, array $meta): void
+    /**
+     * 生成视频并轮询获取结果 URL
+     */
+    private function generateAndPollVideo(KlingService $kling, Work $work, array $config, array $imageUrls): ?string
     {
-        $images = $meta['generated_images'] ?? $meta['selected_images'] ?? [];
-        $results = [];
-
-        if (empty($images)) {
-            // 文生视频
-            $result = $kling->textToVideo("短剧《{$work->title}》", $config);
-            $results[] = $result;
+        if (!empty($imageUrls)) {
+            // 图生视频
+            $result = $kling->imageToVideo($imageUrls[0], "短剧《{$work->title}》场景", $config);
         } else {
-            foreach (array_slice($images, 0, 3) as $img) {
-                $url = $img['url'] ?? '';
-                if ($url) {
-                    $result = $kling->imageToVideo($url, "短剧《{$work->title}》", $config);
-                    $results[] = $result;
-                    $this->sleep(3);
+            // 文生视频（降级）
+            $script = $work->meta['script'] ?? $work->content;
+            $result = $kling->textToVideo(mb_substr($script, 0, 500), $config);
+        }
+
+        $taskId = $result['task_id'] ?? null;
+        if (!$taskId) return null;
+
+        $this->runStep($work, 'video', 'processing', '正在生成视频（可能需要1-3分钟）...');
+        return $this->pollKlingTask($kling, 'video', $taskId, 180);
+    }
+
+    /**
+     * 轮询 Kling 任务直到完成
+     */
+    private function pollKlingTask(KlingService $kling, string $type, string $taskId, int $timeoutSeconds): ?string
+    {
+        $startTime = time();
+        $pollInterval = 5;
+
+        while (time() - $startTime < $timeoutSeconds) {
+            $this->sleep($pollInterval);
+
+            try {
+                $result = $type === 'image'
+                    ? $kling->getImageResult($taskId)
+                    : $kling->getVideoResult($taskId);
+
+                $status = $result['task_status'] ?? '';
+
+                if ($status === 'succeed') {
+                    if ($type === 'image') {
+                        return $result['task_result']['images'][0]['url'] ?? null;
+                    } else {
+                        return $result['task_result']['videos'][0]['url'] ?? null;
+                    }
                 }
+
+                if ($status === 'failed') {
+                    Log::warning("Kling {$type} task {$taskId} failed: " . ($result['task_status_msg'] ?? ''));
+                    return null;
+                }
+            } catch (\Exception $e) {
+                Log::warning("Poll failed: " . $e->getMessage());
             }
         }
 
-        $meta = $work->meta ?? [];
-        $meta['video_results'] = $results;
-        $work->update(['meta' => $meta]);
+        Log::warning("Kling {$type} task {$taskId} timed out after {$timeoutSeconds}s");
+        return null;
     }
 
     private function runStep(Work $work, string $step, string $status, string $message): void

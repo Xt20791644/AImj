@@ -1209,3 +1209,6 @@
 [2026-07-13 14:44:11] local.ERROR: Kling image generation failed {"code":1000,"message":"Auth failed","request_id":"CjUgoGolRIAAAAAABRrLHw","data":null} 
 [2026-07-13 14:51:07] local.ERROR: Kling API failed {"status":401,"body":{"code":1002,"message":"api key not found","request_id":"6b88bf0a-f4be-4ced-af34-199647fafb94"}} 
 [2026-07-13 14:51:22] local.ERROR: Kling API failed {"status":429,"body":{"code":1102,"message":"Account balance not enough","request_id":"1b7d91b7-6248-4b61-b934-a57661f282fa"}} 
+[2026-07-13 16:27:30] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"000e240a-739f-9f7a-b3f6-34a2bd442e20"}} 
+[2026-07-13 16:27:30] local.WARNING: TTS failed: CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 16:27:31] local.INFO: Work 5 completed  
