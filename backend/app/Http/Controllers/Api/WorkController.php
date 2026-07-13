@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessWorkJob;
 use App\Models\Work;
 use App\Models\WorkTimeline;
 use Illuminate\Http\Request;
@@ -57,8 +58,7 @@ class WorkController extends Controller
             ]);
         }
 
-        // TODO: 触发异步生成任务
-        // DispatchGenerateJob::dispatch($work);
+        ProcessWorkJob::dispatch($work->id);
 
         return response()->json($work, 201);
     }
