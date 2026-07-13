@@ -177,7 +177,7 @@ class ProcessWorkJob implements ShouldQueue
         if (!$taskId) return null;
 
         $this->runStep($work, 'video', 'processing', '正在生成视频（可能需要1-3分钟）...');
-        return $this->pollKlingTask($kling, 'video', $taskId, 180);
+        return $this->pollKlingTask($kling, 'video', $taskId, 600);
     }
 
     /**

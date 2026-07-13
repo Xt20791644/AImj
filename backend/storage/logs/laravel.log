@@ -1618,3 +1618,10 @@ Did you mean one of these?
 [2026-07-13 18:23:23] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"48dce000-e4ff-9b71-9f95-95fdb7a6ac70"}} 
 [2026-07-13 18:23:23] local.WARNING: Work 15: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
 [2026-07-13 18:23:23] local.INFO: Work 15 completed successfully  
+[2026-07-13 18:44:07] local.INFO: Work 16: Auto-upgraded video mode to pro for sound support  
+[2026-07-13 18:44:32] local.INFO: Work 16: Generated 1 images  
+[2026-07-13 18:47:34] local.WARNING: Kling video task 905596188433997844 timed out after 180s  
+[2026-07-13 18:47:34] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"ae137948-fcb7-92ac-97d3-6bb0c86bfdc0"}} 
+[2026-07-13 18:47:34] local.WARNING: Work 16: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 18:47:34] local.INFO: Work 16 completed successfully  
+[2026-07-13 18:52:44] local.ERROR: OSS PUT failed: 403  
