@@ -31,7 +31,7 @@ async function playWork(work) {
   try { const r = await api.get(`/works/${work.id}`); viewing.value = r; showDetail.value = true } catch (e) {}
 }
 
-function formatDate(d) { return d ? d.split('T')[0] : '' }
+function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
 </script>
 
 <template>

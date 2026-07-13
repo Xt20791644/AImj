@@ -14,7 +14,7 @@ async function handleDelete(user){try{await ElMessageBox.confirm(`确认删除�
 async function openWorks(user){try{const r=await api.get(`/admin/users/${user.id}/works`);worksUser.value=r.user;userWorks.value=r.works||[];worksDialog.value=true}catch(e){ElMessage.error('获取作品失败')}}
 function openPassword(user){passwordUser.value=user;newPassword.value='';passwordDialog.value=true}
 async function handleResetPassword(){if(!newPassword.value||newPassword.value.length<6){ElMessage.warning('密码至少6位');return};try{const r=await api.post(`/admin/users/${passwordUser.value.id}/password`,{password:newPassword.value});ElMessage.success(r.message||'已重置');passwordDialog.value=false}catch(e){ElMessage.error(e.response?.data?.message||'失败')}}
-function formatDate(d){return d?d.split('T')[0]:''}
+function formatDate(d){if(!d)return '';const t=new Date(d);return t.toLocaleDateString('zh-CN')+' '+t.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
 function formatMeta(m){if(!m)return'无';try{return typeof m==='string'?JSON.stringify(JSON.parse(m),null,2):JSON.stringify(m,null,2)}catch{return String(m)}}
 </script>
 

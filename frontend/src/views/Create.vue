@@ -51,7 +51,7 @@ const cameraTypes = [
 ]
 const kling = reactive({
   image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:3,
-  video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'off',
+  video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'on',
   video_negative_prompt:'', camera_type:'',
 })
 const generatedImages = ref([])
@@ -317,7 +317,8 @@ onUnmounted(()=>stopPolling())
 .pm-core{position:absolute;inset:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent);text-shadow:0 0 16px var(--accent)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .pm-title{font-size:24px;font-weight:800;color:var(--text-bright);margin-bottom:24px}
-.pm-bar{max-width:400px;margin:0 auto 20px}
+.pm-bar{max-width:500px;margin:0 auto 20px}
+.pm-bar .el-progress-bar__outer{height:16px!important;border-radius:20px!important}
 .pm-status{font-size:14px;color:var(--accent);margin-bottom:24px;min-height:20px}
 .pm-steps{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:24px}
 .pm-steps span{font-size:11px;color:var(--text-tertiary);transition:all var(--transition)}
