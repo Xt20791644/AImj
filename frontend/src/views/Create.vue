@@ -112,8 +112,30 @@ onUnmounted(()=>stopPolling())
     <div v-if="currentMode==='fast'" class="step-block glass-panel glow">
       <div class="block-head"><span class="block-num">⚡</span><h2>快速模式 · 一键生成</h2></div>
       <p class="block-hint">输入故事大纲，AI自动完成全流程，无需手动干预</p>
-      <el-row :gutter="16"><el-col :span="12"><el-form-item label="作品名称"><el-input v-model="story.title" placeholder="给你的短剧起一个名字" size="large"/></el-form-item></el-col><el-col :span="12"><el-form-item label="质量预设"><el-select v-model="kling.preset" size="large" style="width:100%" @change="applyPreset"><el-option v-for="(p,k) in presets" :key="k" :label="p.name" :value="k"/></el-select></el-form-item></el-col></el-row>
-      <el-form-item label="故事大纲"><el-input v-model="story.content" type="textarea" :rows="8" placeholder="输入故事大纲，剩下的全部交给AI处理..."/></el-form-item>
+      <el-row :gutter="16">
+        <el-col :span="12"><el-form-item label="作品名称"><el-input v-model="story.title" placeholder="给你的短剧起一个名字" size="large"/></el-form-item></el-col>
+        <el-col :span="12"><el-form-item label="质量预设">
+          <el-select v-model="kling.preset" size="large" style="width:100%" @change="applyPreset">
+            <el-option label="真人短剧 (推荐)" value="short_drama"/>
+            <el-option label="电影质感" value="cinematic"/>
+            <el-option label="快速预览" value="fast_preview"/>
+          </el-select>
+        </el-form-item></el-col>
+      </el-row>
+      <el-form-item label="故事大纲"><el-input v-model="story.content" type="textarea" :rows="6" placeholder="输入故事大纲，剩下的全部交给AI处理..."/></el-form-item>
+
+      <!-- 预设参数展示 -->
+      <div class="preset-info glass-panel" style="padding:16px 20px;margin-bottom:16px">
+        <div class="pi-head"><span class="tech-badge">当前配置参数</span></div>
+        <div class="pi-grid">
+          <div class="pi-item"><span class="pi-label">视频模型</span><span class="pi-val mono">{{ kling.video_model || '-' }}</span></div>
+          <div class="pi-item"><span class="pi-label">画质模式</span><span class="pi-val mono">{{ kling.video_mode || '-' }}</span></div>
+          <div class="pi-item"><span class="pi-label">单段时长</span><span class="pi-val mono">{{ kling.video_duration || '5' }}秒</span></div>
+          <div class="pi-item"><span class="pi-label">图片模型</span><span class="pi-val mono">{{ kling.image_model || '-' }}</span></div>
+          <div class="pi-item"><span class="pi-label">分辨率</span><span class="pi-val mono">{{ kling.image_resolution || '-' }}</span></div>
+          <div class="pi-item"><span class="pi-label">画面比例</span><span class="pi-val mono">{{ kling.image_aspect_ratio || '-' }}</span></div>
+        </div>
+      </div>
       <div class="block-action"><span class="count-hint mono">50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
     </div>
 
@@ -181,4 +203,11 @@ onUnmounted(()=>stopPolling())
 .img-placeholder{height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-elevated);font-size:36px;color:var(--text-tertiary)}
 .img-placeholder p{font-size:11px;margin-top:8px;color:var(--text-tertiary)}
 .img-check{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 0 12px var(--accent)}
+
+.preset-info{border-radius:var(--radius)}
+.pi-head{margin-bottom:12px}
+.pi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pi-item{display:flex;flex-direction:column;gap:4px;padding:10px 14px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border-subtle)}
+.pi-label{font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em}
+.pi-val{font-size:14px;color:var(--accent);font-weight:600}
 </style>
