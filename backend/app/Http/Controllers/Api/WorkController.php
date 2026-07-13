@@ -68,7 +68,7 @@ class WorkController extends Controller
         // 精细模式不自动触发Job，快速模式直接调度
         if ($mode !== 'fine') {
             $this->initTimelineSteps($work);
-            ProcessWorkJob::dispatchSync($work->id);
+            ProcessWorkJob::dispatch($work->id);
         } else {
             // 精细模式：标记剧本已完成（用户在前端已确认）
             $this->updateTimeline($work, 'script', 'completed', '剧本已确认');
@@ -153,7 +153,7 @@ class WorkController extends Controller
         $this->updateTimeline($work, 'characters', 'completed', '角色提取完成');
         $this->updateTimeline($work, 'storyboard', 'completed', '分镜生成完成');
 
-        ProcessWorkJob::dispatchSync($work->id, 'video');
+        ProcessWorkJob::dispatch($work->id, 'video');
 
         return response()->json($work);
     }
