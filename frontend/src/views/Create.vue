@@ -113,7 +113,7 @@ function toggleImage(img){img.selected=!img.selected}
 function nextToVideo(){if(!generatedImages.value.filter(i=>i.selected).length){ElMessage.warning('至少选一张');return};activeStep.value=2}
 async function finalGenerate(){loading.value=true;try{const result=await api.post('/works',{title:story.title,content:story.content,style:story.style,mode:'fine',script:script.value,kling_config:{...kling}});workId.value=result.id;creditStore.fetchBalance();activeStep.value=3;startPolling();ElMessage.success('已提交')}catch(e){loading.value=false;if(e.response?.status===402){ElMessage.error('积分不足');router.push('/profile')}}}
 async function fastCreate(){if(!story.title.trim()||!story.content.trim()){ElMessage.warning('请填写');return};if(!auth.isLoggedIn){router.push('/login');return};loading.value=true;try{const result=await api.post('/works',{title:story.title,content:story.content,style:story.style,mode:'fast',kling_config:{...kling}});workId.value=result.id;creditStore.fetchBalance();activeStep.value=3;startPolling()}catch(e){loading.value=false;if(e.response?.status===402){ElMessage.error('积分不足');router.push('/profile')}}}
-function startPolling(){pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);genProgress.value=r.progress||0;genStatus.value=r.status_text||'处理中...';if(r.status==='completed'){stopPolling();ElMessage.success('创作完成！');setTimeout(()=>router.push('/works'),1500)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败：'+(r.status_text||'未知'))}}catch(e){}},2000)}
+function startPolling(){startTime.value=Date.now();pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);genProgress.value=r.progress||0;genStatus.value=r.status_text||'处理中...';if(genProgress.value>0){const elapsed=(Date.now()-startTime.value)/1000;estimatedTime.value=Math.max(1,Math.ceil(elapsed*(100-genProgress.value)/genProgress.value))}if(r.status==='completed'){stopPolling();ElMessage.success('创作完成！');setTimeout(()=>router.push('/works'),1500)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败：'+(r.status_text||'未知'))}}catch(e){}},2000)}
 function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
 onUnmounted(()=>stopPolling())
 </script>
@@ -244,8 +244,9 @@ onUnmounted(()=>stopPolling())
       <div class="progress-modal">
         <div class="pm-spinner"><div class="pm-ring"></div><div class="pm-core">◆</div></div>
         <h2 class="pm-title">创作引擎运行中</h2>
-        <div class="pm-bar"><el-progress :percentage="genProgress" :stroke-width="12" :text-inside="true" :status="genProgress===100?'success':''" /></div>
+        <div class="pm-bar"><el-progress :percentage="genProgress" :stroke-width="25" :text-inside="true" :status="genProgress===100?'success':''" /></div>
         <p class="pm-status mono">{{ genStatus || '正在初始化...' }}</p>
+        <p class="pm-eta mono" v-if="genProgress>0&&genProgress<100">预计剩余 {{ estimatedTime }} 秒</p>
         <div class="pm-steps">
           <span :class="{done:genProgress>=15}">剧本分析</span><span class="pm-arrow">→</span>
           <span :class="{done:genProgress>=30}">角色提取</span><span class="pm-arrow">→</span>
@@ -324,9 +325,10 @@ onUnmounted(()=>stopPolling())
 .pm-core{position:absolute;inset:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent);text-shadow:0 0 16px var(--accent)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .pm-title{font-size:24px;font-weight:800;color:var(--text-bright);margin-bottom:24px}
-.pm-bar{max-width:500px;margin:0 auto 20px}
-.pm-bar .el-progress-bar__outer{height:30px!important;border-radius:20px!important}
-.pm-bar .el-progress-bar__inner{font-size:14px!important;font-weight:700}
+.pm-bar{max-width:560px;margin:0 auto 20px}
+.pm-bar :deep(.el-progress-bar__outer){height:25px!important;border-radius:20px!important}
+.pm-bar :deep(.el-progress-bar__innerText){font-size:13px!important;font-weight:700;color:#fff!important}
+.pm-eta{font-size:12px;color:var(--text-tertiary);margin-bottom:20px}
 .pm-status{font-size:14px;color:var(--accent);margin-bottom:24px;min-height:20px}
 .pm-steps{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:24px}
 .pm-steps span{font-size:11px;color:var(--text-tertiary);transition:all var(--transition)}
