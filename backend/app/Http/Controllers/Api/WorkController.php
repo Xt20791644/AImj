@@ -13,10 +13,16 @@ class WorkController extends Controller
 {
     public function index(Request $request)
     {
-        $works = Work::with('user:id,name,avatar')
-            ->where('status', 'completed')
-            ->latest()
-            ->paginate(12);
+        $query = Work::with('user:id,name,avatar')->latest();
+        
+        // ?my=1 只返回当前用户的作品
+        if ($request->has('my')) {
+            $query->where('user_id', $request->user()->id);
+        } else {
+            $query->where('status', 'completed');
+        }
+        
+        $works = $query->paginate(12);
         return response()->json($works);
     }
 
