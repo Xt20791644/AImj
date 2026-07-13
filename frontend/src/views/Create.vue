@@ -318,7 +318,8 @@ onUnmounted(()=>stopPolling())
 @keyframes spin{to{transform:rotate(360deg)}}
 .pm-title{font-size:24px;font-weight:800;color:var(--text-bright);margin-bottom:24px}
 .pm-bar{max-width:500px;margin:0 auto 20px}
-.pm-bar .el-progress-bar__outer{height:16px!important;border-radius:20px!important}
+.pm-bar .el-progress-bar__outer{height:30px!important;border-radius:20px!important}
+.pm-bar .el-progress-bar__inner{font-size:14px!important;font-weight:700}
 .pm-status{font-size:14px;color:var(--accent);margin-bottom:24px;min-height:20px}
 .pm-steps{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:24px}
 .pm-steps span{font-size:11px;color:var(--text-tertiary);transition:all var(--transition)}

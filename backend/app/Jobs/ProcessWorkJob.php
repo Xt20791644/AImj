@@ -103,7 +103,8 @@ class ProcessWorkJob implements ShouldQueue
             Log::info("Work {$work->id} completed successfully");
         } catch (\Throwable $e) {
             Log::error("Work {$work->id} failed: " . $e->getMessage());
-            $work->update(['status' => 'failed', 'status_text' => '失败: ' . $e->getMessage()]);
+            $msg = mb_strlen($e->getMessage()) > 200 ? mb_substr($e->getMessage(), 0, 200) . '...' : $e->getMessage();
+            $work->update(['status' => 'failed', 'status_text' => '失败: ' . $msg]);
             // 退款：生成失败退还积分
             $cost = config('services.credits.cost_per_generation', 50);
             $work->user->rechargeCredits($cost, "创作失败退款《{$work->title}》");

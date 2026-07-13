@@ -16,9 +16,9 @@ return new class extends Migration
             $table->string('style')->default('realistic'); // realistic | anime | 3d | cyberpunk
             $table->string('status')->default('pending'); // pending | processing | completed | failed
             $table->integer('progress')->default(0); // 0-100
-            $table->string('status_text')->nullable(); // 当前步骤描述
-            $table->string('output_video')->nullable(); // 最终视频路径
-            $table->string('output_cover')->nullable(); // 封面图
+            $table->text('status_text')->nullable(); // 当前步骤描述
+            $table->text('output_video')->nullable(); // 最终视频路径
+            $table->text('output_cover')->nullable(); // 封面图
             $table->integer('duration')->default(0); // 视频时长(秒)
             $table->integer('views')->default(0);
             $table->json('meta')->nullable(); // 角色/场景/分镜等中间产物JSON
