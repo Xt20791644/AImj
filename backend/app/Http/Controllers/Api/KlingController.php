@@ -60,7 +60,7 @@ class KlingController extends Controller
         }
 
         // 推荐图片数量
-        $recImageN = $sceneCount < 3 ? 3 : ($sceneCount > 5 ? 5 : $sceneCount);
+            $recImageN = 1; // 默认只生成1张，省积分
 
         // 推荐模式
         $recVideoMode = $charCount > 500 ? 'pro' : 'std';

@@ -50,7 +50,7 @@ const cameraTypes = [
   {value:'forward_up',label:'前上推进'},{value:'right_turn_forward',label:'右转前进'},{value:'left_turn_forward',label:'左转前进'},
 ]
 const kling = reactive({
-  image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:3,
+  image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:1,
   video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'on',
   video_negative_prompt:'', camera_type:'',
 })

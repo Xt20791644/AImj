@@ -79,8 +79,11 @@ class ProcessWorkJob implements ShouldQueue
                     $this->runStep($work, 'video', 'completed', '视频生成完成(文生视频)');
                 }
             } catch (\Exception $e) {
-                Log::warning("Work {$work->id}: Video generation failed - " . $e->getMessage());
-                $this->runStep($work, 'video', 'completed', '视频生成跳过（API失败或余额不足）');
+                $errMsg = '视频生成失败: ' . (mb_strlen($e->getMessage()) > 100 ? mb_substr($e->getMessage(), 0, 100) : $e->getMessage());
+                Log::warning("Work {$work->id}: {$errMsg}");
+                $this->runStep($work, 'video', 'failed', $errMsg);
+                // 退还视频部分的积分（只扣图片）
+                $work->user->rechargeCredits(30, "视频失败退款《{$work->title}》");
             }
             $work->update(['progress' => 80, 'meta' => $meta]);
 
