@@ -4,9 +4,12 @@ import { useWorkStore } from '../stores/work'
 
 const workStore = useWorkStore()
 
-onMounted(() => {
-  workStore.fetchWorks()
-})
+function formatDate(d) {
+  if (!d) return ''
+  return d.split('T')[0]
+}
+
+onMounted(() => { workStore.fetchWorks() })
 </script>
 
 <template>
@@ -23,7 +26,7 @@ onMounted(() => {
           <div class="work-info">
             <h3>{{ work.title }}</h3>
             <div class="work-meta">
-              <span>{{ work.created_at }}</span>
+              <span>{{ formatDate(work.created_at) }}</span>
               <span>{{ work.views || 0 }} 次播放</span>
             </div>
           </div>
