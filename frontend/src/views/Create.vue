@@ -58,8 +58,6 @@ const generatedImages = ref([])
 const analysis = ref(null)
 const warnings = ref([])
 const loading = ref(false); const recommendLoading = ref(false)
-const genProgress = ref(0)
-const genStatus = ref('')
 
 // 当前视频模型是否支持声音
 const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
@@ -113,7 +111,7 @@ function toggleImage(img){img.selected=!img.selected}
 function nextToVideo(){if(!generatedImages.value.filter(i=>i.selected).length){ElMessage.warning('至少选一张');return};activeStep.value=2}
 async function finalGenerate(){loading.value=true;try{const result=await api.post('/works',{title:story.title,content:story.content,style:story.style,mode:'fine',script:script.value,kling_config:{...kling}});workId.value=result.id;creditStore.fetchBalance();activeStep.value=3;startPolling();ElMessage.success('已提交')}catch(e){loading.value=false;if(e.response?.status===402){ElMessage.error('积分不足');router.push('/profile')}}}
 async function fastCreate(){if(!story.title.trim()||!story.content.trim()){ElMessage.warning('请填写');return};if(!auth.isLoggedIn){router.push('/login');return};loading.value=true;try{const result=await api.post('/works',{title:story.title,content:story.content,style:story.style,mode:'fast',kling_config:{...kling}});workId.value=result.id;creditStore.fetchBalance();activeStep.value=3;startPolling()}catch(e){loading.value=false;if(e.response?.status===402){ElMessage.error('积分不足');router.push('/profile')}}}
-function startPolling(){startTime.value=Date.now();pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);genProgress.value=r.progress||0;genStatus.value=r.status_text||'处理中...';if(genProgress.value>0){const elapsed=(Date.now()-startTime.value)/1000;estimatedTime.value=Math.max(1,Math.ceil(elapsed*(100-genProgress.value)/genProgress.value))}if(r.status==='completed'){stopPolling();ElMessage.success('创作完成！');setTimeout(()=>router.push('/works'),1500)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败：'+(r.status_text||'未知'))}}catch(e){}},2000)}
+function startPolling(){pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);if(r.status==='completed'){stopPolling();ElMessage.success('创作完成！');setTimeout(()=>router.push('/works'),1500)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败：'+(r.status_text||'未知'))}}catch(e){}},3000)}
 function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
 onUnmounted(()=>stopPolling())
 </script>
@@ -244,19 +242,7 @@ onUnmounted(()=>stopPolling())
       <div class="progress-modal">
         <div class="pm-spinner"><div class="pm-ring"></div><div class="pm-core">◆</div></div>
         <h2 class="pm-title">创作引擎运行中</h2>
-        <div class="pm-bar"><el-progress :percentage="genProgress" :stroke-width="25" :text-inside="true" :status="genProgress===100?'success':''" /></div>
-        <p class="pm-status mono">{{ genStatus || '正在初始化...' }}</p>
-        <p class="pm-eta mono" v-if="genProgress>0&&genProgress<100">预计剩余 {{ estimatedTime }} 秒</p>
-        <div class="pm-steps">
-          <span :class="{done:genProgress>=15}">剧本分析</span><span class="pm-arrow">→</span>
-          <span :class="{done:genProgress>=30}">角色提取</span><span class="pm-arrow">→</span>
-          <span :class="{done:genProgress>=45}">分镜生成</span><span class="pm-arrow">→</span>
-          <span :class="{done:genProgress>=60}">画面渲染</span><span class="pm-arrow">→</span>
-          <span :class="{done:genProgress>=80}">视频生成</span><span class="pm-arrow">→</span>
-          <span :class="{done:genProgress>=100}">导出完成</span>
-        </div>
-        <p class="pm-hint">可关闭此页面，稍后在作品广场查看</p>
-        <p class="pm-eta mono" v-if="genProgress>0&&genProgress<100">⏱ 预计剩余 {{ estimatedTime }} 秒</p>
+        <p class="pm-hint">AI 正在后台处理，可关闭此页面稍后在作品广场查看</p>
       </div>
     </div>
   </div>

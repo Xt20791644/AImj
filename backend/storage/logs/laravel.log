@@ -1663,3 +1663,11 @@ Did you mean one of these?
 #23 E:/prject/OpenCodePrject/aiduanju/backend/test_oss.php(12): App/Services/OssService->putObject('test.txt', 'Hello OSS from ...', 'text/plain')
 #24 {main}
 "} 
+[2026-07-13 19:03:39] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/test/upload-test-20260713-190338.txt  
+[2026-07-13 19:04:37] local.INFO: Work 17: Auto-upgraded video mode to pro for sound support  
+[2026-07-13 19:05:02] local.INFO: Work 17: Generated 1 images  
+[2026-07-13 19:06:55] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"7dcf1a8a-8086-9ff8-9094-104e38ad9664"}} 
+[2026-07-13 19:06:55] local.WARNING: Work 17: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 19:07:05] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/17/output.mp4  
+[2026-07-13 19:07:07] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/17/cover.jpg  
+[2026-07-13 19:07:07] local.INFO: Work 17 completed successfully  
