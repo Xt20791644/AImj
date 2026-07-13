@@ -12,8 +12,8 @@ async function handleRecharge() {
   }
   loading.value = true
   try {
-    const { data } = await api.post(`/admin/users/${form.user_id}/recharge`, { amount: form.amount, note: form.note })
-    ElMessage.success(data.message || '充值成功')
+    const result = await api.post(`/admin/users/${form.user_id}/recharge`, { amount: form.amount, note: form.note })
+    ElMessage.success(result.message || '充值成功')
     form.amount = null; form.note = ''
   } catch (e) {
     ElMessage.error(e.response?.data?.message || '充值失败')

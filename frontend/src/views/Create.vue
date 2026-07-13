@@ -21,17 +21,17 @@ const imageModels = [
   {value:'kling-v1',label:'Kling V1 (基础)'},{value:'kling-image-o1',label:'Kling Image O1 (专业4K)'},
 ]
 const videoModels = [
-  {value:'kling-v3',label:'Kling V3 (旗舰)',sound:true},
-  {value:'kling-v3-omni',label:'Kling V3 Omni',sound:true,voice:true},
-  {value:'kling-v2-6',label:'Kling V2.6 (推荐·运镜)',sound:true},
-  {value:'kling-video-o1',label:'Kling Video O1 (专业)',sound:true},
-  {value:'kling-v2-5-turbo',label:'Kling V2.5 Turbo (快速)',sound:false},
-  {value:'kling-v2-1-master',label:'Kling V2.1 Master',sound:false},
-  {value:'kling-v2-1',label:'Kling V2.1',sound:false},
-  {value:'kling-v2-master',label:'Kling V2 Master',sound:false},
-  {value:'kling-v1-6',label:'Kling V1.6',sound:false},
-  {value:'kling-v1-5',label:'Kling V1.5',sound:false},
-  {value:'kling-v1',label:'Kling V1',sound:false},
+  {value:'kling-v3',label:'Kling V3 (旗舰)',sound:true,camera:true,cfg:true,t2v:true},
+  {value:'kling-v3-omni',label:'Kling V3 Omni (全能)',sound:true,camera:true,cfg:true,t2v:true},
+  {value:'kling-v2-6',label:'Kling V2.6 (推荐)',sound:true,camera:true,cfg:false,t2v:true},
+  {value:'kling-video-o1',label:'Kling Video O1 (专业)',sound:true,camera:false,cfg:false,t2v:false},
+  {value:'kling-v2-5-turbo',label:'Kling V2.5 Turbo (快速)',sound:false,camera:false,cfg:false,t2v:true},
+  {value:'kling-v2-1-master',label:'Kling V2.1 Master',sound:false,camera:false,cfg:false,t2v:false},
+  {value:'kling-v2-1',label:'Kling V2.1',sound:false,camera:false,cfg:false,t2v:false},
+  {value:'kling-v2-master',label:'Kling V2 Master',sound:false,camera:false,cfg:false,t2v:false},
+  {value:'kling-v1-6',label:'Kling V1.6',sound:false,camera:false,cfg:true,t2v:false},
+  {value:'kling-v1-5',label:'Kling V1.5',sound:false,camera:false,cfg:true,t2v:false},
+  {value:'kling-v1',label:'Kling V1',sound:false,camera:false,cfg:true,t2v:false},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [
@@ -191,7 +191,7 @@ onUnmounted(()=>stopPolling())
         </el-row>
         <el-row :gutter="16">
           <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
-          <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" ><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" :disabled="!currentVideoModel?.camera" ><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
         <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
