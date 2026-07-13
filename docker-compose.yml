@@ -54,11 +54,12 @@ services:
     working_dir: /app
     ports:
       - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host"
+    command: sh -c "npm config set registry https://registry.npmmirror.com && npm install && npm run dev -- --host"
     volumes:
       - ./frontend:/app
     environment:
       VITE_API_BASE: http://localhost:8000
+      # npm 淘宝镜像已设置在 command 中，无需额外配置
 
 volumes:
   mysql_data:

@@ -1,0 +1,13 @@
+# Composer 阿里云全量镜像 — 国内加速
+# 使用方式: 复制此文件内容到 ~/.composer/config.json
+# 或在项目根目录执行:
+# composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
+
+{
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer/"
+        }
+    }
+}
