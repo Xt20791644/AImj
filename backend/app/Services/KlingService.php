@@ -94,6 +94,9 @@ class KlingService
     private function addCameraControl(array &$body, array $config): void
     {
         if (empty($config['camera_type'])) return;
+        $model = $body['model_name'] ?? '';
+        // kling-v2-6 和更早版本不支持 camera_control
+        if (str_contains($model, 'v2-') || str_contains($model, 'v1')) return;
         $body['camera_control'] = ['type' => $config['camera_type']];
         if ($config['camera_type'] === 'simple' && !empty($config['camera_config'])) {
             $body['camera_control']['config'] = $config['camera_config'];
