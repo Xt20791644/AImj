@@ -1612,3 +1612,9 @@ Did you mean one of these?
 [2026-07-13 18:12:07] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"91016d9b-997d-925c-8271-b82dc7ab00ba"}} 
 [2026-07-13 18:12:07] local.WARNING: Work 14: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
 [2026-07-13 18:12:07] local.INFO: Work 14 completed successfully  
+[2026-07-13 18:21:51] local.INFO: Work 15: Auto-upgraded video mode to pro for sound support  
+[2026-07-13 18:23:22] local.INFO: Work 15: Generated 3 images  
+[2026-07-13 18:23:22] local.WARNING: Work 15: Video generation failed - 可灵API失败: Camera control is not supported by the current model  
+[2026-07-13 18:23:23] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"48dce000-e4ff-9b71-9f95-95fdb7a6ac70"}} 
+[2026-07-13 18:23:23] local.WARNING: Work 15: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 18:23:23] local.INFO: Work 15 completed successfully  

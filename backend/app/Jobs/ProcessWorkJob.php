@@ -225,8 +225,6 @@ class ProcessWorkJob implements ShouldQueue
 
     private function sleep(int $seconds): void
     {
-        if (app()->environment('local')) {
-            sleep($seconds);
-        }
+        sleep($seconds);
     }
 }
