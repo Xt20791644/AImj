@@ -5,63 +5,60 @@ import { useRouter, useRoute } from 'vue-router'
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
-
-function handleLogout() {
-  auth.logout()
-  router.push('/')
-}
+function handleLogout() { auth.logout(); router.push('/') }
 </script>
 
 <template>
-  <el-container class="main-layout">
-    <el-header class="header">
+  <div class="main-app">
+    <header class="main-header">
       <div class="header-left">
-        <router-link to="/" class="logo">🎬 AI短剧</router-link>
-        <el-menu mode="horizontal" :default-active="route.path" router class="nav-menu">
-          <el-menu-item index="/create">创作工坊</el-menu-item>
-          <el-menu-item index="/works">作品广场</el-menu-item>
-        </el-menu>
+        <router-link to="/" class="logo">
+          <span class="logo-icon">◆</span>
+          <span class="logo-text">AI短剧</span>
+        </router-link>
+        <nav class="nav-links">
+          <router-link to="/create" :class="{ active: route.path.startsWith('/create') }">创作工坊</router-link>
+          <router-link to="/works" :class="{ active: route.path==='/works' }">作品广场</router-link>
+        </nav>
       </div>
       <div class="header-right">
         <template v-if="auth.isLoggedIn">
-          <span class="credits">🎯 {{ auth.user?.credits || 0 }} 积分</span>
-          <el-dropdown>
-            <span class="user-info">
-              {{ auth.user?.name }} <el-icon><ArrowDown /></el-icon>
-            </span>
+          <span class="credit-badge">◆ {{ auth.user?.credits || 0 }}</span>
+          <el-dropdown trigger="click">
+            <span class="user-avatar">{{ auth.user?.name?.[0] }}</span>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="router.push('/profile')">个人中心</el-dropdown-item>
                 <el-dropdown-item v-if="auth.isAdmin" @click="router.push('/admin')">管理后台</el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">退出</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
         </template>
         <template v-else>
-          <el-button text @click="router.push('/login')">登录</el-button>
-          <el-button type="primary" @click="router.push('/register')">免费注册</el-button>
+          <el-button text class="nav-btn" @click="router.push('/login')">登录</el-button>
+          <el-button class="btn-primary" size="small" @click="router.push('/register')">注册</el-button>
         </template>
       </div>
-    </el-header>
-    <el-main>
-      <router-view />
-    </el-main>
-    <el-footer class="footer">
-      <p>© 2026 AI短剧 — AI驱动的短剧创作平台</p>
-    </el-footer>
-  </el-container>
+    </header>
+    <main class="main-content"><router-view /></main>
+  </div>
 </template>
 
 <style scoped>
-.main-layout { min-height: 100vh; display: flex; flex-direction: column; }
-.header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); height: 60px; position: sticky; top: 0; z-index: 100; }
-.header-left { display: flex; align-items: center; gap: 32px; }
-.logo { font-size: 20px; font-weight: 700; color: #409eff; }
-.nav-menu { border-bottom: none !important; }
-.nav-menu .el-menu-item { height: 60px; line-height: 60px; }
-.header-right { display: flex; align-items: center; gap: 16px; }
-.credits { color: #e6a23c; font-weight: 600; font-size: 14px; }
-.user-info { cursor: pointer; color: #303133; }
-.footer { text-align: center; padding: 20px; color: #909399; font-size: 13px; }
+.main-app { min-height:100vh; display:flex; flex-direction:column; }
+.main-header { display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:56px; position:sticky; top:0; z-index:100; background:rgba(10,12,20,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+.header-left { display:flex; align-items:center; gap:40px; }
+.logo { display:flex; align-items:center; gap:8px; font-size:20px; font-weight:700; color:var(--text-bright); text-decoration:none; }
+.logo-icon { color:var(--accent); font-size:24px; text-shadow:0 0 12px var(--accent); }
+.logo-text { letter-spacing:2px; background:linear-gradient(135deg,var(--accent),var(--text-bright)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.nav-links { display:flex; gap:4px; }
+.nav-links a { padding:6px 16px; border-radius:6px; color:var(--text-dim); font-size:14px; transition:all .2s; }
+.nav-links a:hover,.nav-links a.active { color:var(--accent); background:rgba(0,229,255,0.08); }
+.header-right { display:flex; align-items:center; gap:16px; }
+.credit-badge { color:var(--warning); font-size:13px; padding:4px 10px; border-radius:4px; background:rgba(255,165,2,0.1); border:1px solid rgba(255,165,2,0.2); }
+.user-avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#000; font-weight:700; cursor:pointer; font-size:14px; }
+.nav-btn { color:var(--text-dim)!important; }
+.btn-primary { background:linear-gradient(135deg,var(--accent),#0099ff)!important; border:none!important; color:#000!important; font-weight:600!important; }
+.main-content { flex:1; padding:32px; max-width:1400px; width:100%; margin:0 auto; }
 </style>

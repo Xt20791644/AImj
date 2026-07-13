@@ -8,25 +8,25 @@ export const useCreditStore = defineStore('credit', () => {
   const loading = ref(false)
 
   async function fetchBalance() {
-    const { data } = await api.get('/credits/balance')
-    balance.value = data.balance
-    return data
+    const result = await api.get('/credits/balance')
+    balance.value = result.balance
+    return result
   }
 
   async function fetchTransactions(page = 1) {
     loading.value = true
     try {
-      const { data } = await api.get('/credits/transactions', { params: { page } })
-      transactions.value = data.data
-      return data
+      const result = await api.get('/credits/transactions', { params: { page } })
+      transactions.value = result.data
+      return result
     } finally {
       loading.value = false
     }
   }
 
   async function recharge(amount) {
-    const { data } = await api.post('/credits/recharge', { amount })
-    return data
+    const result = await api.post('/credits/recharge', { amount })
+    return result
   }
 
   return { balance, transactions, loading, fetchBalance, fetchTransactions, recharge }

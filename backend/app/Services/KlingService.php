@@ -8,90 +8,125 @@ use Illuminate\Support\Facades\Log;
 class KlingService
 {
     private string $apiKey;
-    private string $apiSecret;
     private string $apiBase;
 
     public function __construct()
     {
         $this->apiKey = config('services.kling.api_key');
-        $this->apiSecret = config('services.kling.api_secret');
-        $this->apiBase = config('services.kling.api_base');
+        $this->apiBase = config('services.kling.api_base', 'https://api-beijing.klingai.com');
     }
 
-    /**
-     * 生成图片
-     * @return array {task_id: string}
-     */
-    public function generateImage(string $prompt, array $options = []): array
+    // ============================================
+    // 图片生成
+    // ============================================
+
+    public function generateImage(string $prompt, array $config = []): array
     {
-        $response = Http::withToken($this->getToken())
-            ->post("{$this->apiBase}/v1/images/generations", [
-                'model_name' => 'kling-v1',
-                'prompt' => $prompt,
-                'negative_prompt' => $options['negative_prompt'] ?? '',
-                'n' => $options['n'] ?? 1,
-                'size' => $options['size'] ?? '1024x1024',
-                ...$options,
-            ]);
+        $defaults = KlingConfig::defaults();
+        $body = [
+            'model_name' => $config['image_model'] ?? $defaults['image_model'],
+            'prompt' => $prompt,
+            'negative_prompt' => $config['image_negative_prompt'] ?? '',
+            'n' => (int)($config['image_n'] ?? 1),
+            'aspect_ratio' => $config['image_aspect_ratio'] ?? '9:16',
+            'resolution' => $config['image_resolution'] ?? '1k',
+        ];
+        if (!empty($config['reference_image'])) $body['image'] = $config['reference_image'];
 
-        if (!$response->successful()) {
-            Log::error('Kling image generation failed', $response->json());
-            throw new \Exception('可灵生图失败: ' . ($response->json('message') ?? '未知错误'));
-        }
-
-        return $response->json();
+        return $this->post('/v1/images/generations', $body);
     }
 
-    /**
-     * 查询图片生成结果
-     */
     public function getImageResult(string $taskId): array
     {
-        $response = Http::withToken($this->getToken())
-            ->get("{$this->apiBase}/v1/images/generations/{$taskId}");
-
-        return $response->json();
+        return $this->get("/v1/images/generations/{$taskId}");
     }
 
-    /**
-     * 生成视频（图生视频）
-     * @return array {task_id: string}
-     */
-    public function generateVideo(string $imageUrl, string $prompt = '', array $options = []): array
-    {
-        $response = Http::withToken($this->getToken())
-            ->post("{$this->apiBase}/v1/videos/image2video", [
-                'model_name' => 'kling-v1',
-                'image' => $imageUrl,
-                'prompt' => $prompt,
-                'duration' => $options['duration'] ?? '5',
-                'mode' => $options['mode'] ?? 'std',
-                ...$options,
-            ]);
+    // ============================================
+    // 视频生成
+    // ============================================
 
-        if (!$response->successful()) {
-            Log::error('Kling video generation failed', $response->json());
-            throw new \Exception('可灵生视频失败: ' . ($response->json('message') ?? '未知错误'));
+    public function imageToVideo(string $imageUrl, string $prompt, array $config = []): array
+    {
+        $defaults = KlingConfig::defaults();
+        $body = [
+            'model_name' => $config['video_model'] ?? $defaults['video_model'],
+            'image' => $imageUrl,
+            'prompt' => $prompt,
+            'negative_prompt' => $config['video_negative_prompt'] ?? '',
+            'duration' => (string)($config['video_duration'] ?? '5'),
+            'mode' => $config['video_mode'] ?? 'pro',
+        ];
+        if (!empty($config['image_tail'])) $body['image_tail'] = $config['image_tail'];
+        if (($config['video_sound'] ?? '') === 'on') $body['sound'] = 'on';
+        if (!empty($config['video_aspect_ratio'])) $body['aspect_ratio'] = $config['video_aspect_ratio'];
+        $this->addCameraControl($body, $config);
+        if (isset($config['cfg_scale']) && !str_starts_with($body['model_name'], 'kling-v2')) {
+            $body['cfg_scale'] = (float)$config['cfg_scale'];
         }
 
-        return $response->json();
+        return $this->post('/v1/videos/image2video', $body);
     }
 
-    /**
-     * 查询视频生成结果
-     */
+    public function textToVideo(string $prompt, array $config = []): array
+    {
+        $defaults = KlingConfig::defaults();
+        $body = [
+            'model_name' => $config['video_model'] ?? $defaults['video_model'],
+            'prompt' => $prompt,
+            'negative_prompt' => $config['video_negative_prompt'] ?? '',
+            'duration' => (string)($config['video_duration'] ?? '5'),
+            'mode' => $config['video_mode'] ?? 'pro',
+        ];
+        if (($config['video_sound'] ?? '') === 'on') $body['sound'] = 'on';
+        if (!empty($config['video_aspect_ratio'])) $body['aspect_ratio'] = $config['video_aspect_ratio'];
+        return $this->post('/v1/videos/text2video', $body);
+    }
+
     public function getVideoResult(string $taskId): array
     {
-        $response = Http::withToken($this->getToken())
-            ->get("{$this->apiBase}/v1/videos/image2video/{$taskId}");
-
-        return $response->json();
+        return $this->get("/v1/videos/image2video/{$taskId}");
     }
 
-    private function getToken(): string
+    // ============================================
+    // 内部方法
+    // ============================================
+
+    private function addCameraControl(array &$body, array $config): void
     {
-        // 可灵API使用AK/SK方式鉴权，需要自行实现签名
-        // 简化版：直接使用API Key（具体鉴权方式以可灵官方文档为准）
-        return $this->apiSecret ?: $this->apiKey;
+        if (empty($config['camera_type'])) return;
+        $body['camera_control'] = ['type' => $config['camera_type']];
+        if ($config['camera_type'] === 'simple' && !empty($config['camera_config'])) {
+            $body['camera_control']['config'] = $config['camera_config'];
+        }
+    }
+
+    private function post(string $path, array $body): array
+    {
+        $response = Http::withHeaders($this->authHeaders())->post("{$this->apiBase}{$path}", $body);
+        return $this->parseResponse($response);
+    }
+
+    private function get(string $path): array
+    {
+        $response = Http::withHeaders($this->authHeaders())->get("{$this->apiBase}{$path}");
+        return $this->parseResponse($response);
+    }
+
+    private function authHeaders(): array
+    {
+        return ['Authorization' => "Bearer {$this->apiKey}", 'Content-Type' => 'application/json'];
+    }
+
+    private function parseResponse($response): array
+    {
+        if (!$response->successful()) {
+            $body = $response->json();
+            throw new \Exception('可灵API失败: ' . ($body['message'] ?? '未知错误'));
+        }
+        $body = $response->json();
+        if (($body['code'] ?? -1) !== 0) {
+            throw new \Exception('可灵API错误: ' . ($body['message'] ?? '未知错误'));
+        }
+        return $body['data'] ?? $body;
     }
 }

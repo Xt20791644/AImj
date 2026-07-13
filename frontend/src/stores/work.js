@@ -10,23 +10,23 @@ export const useWorkStore = defineStore('work', () => {
   async function fetchWorks(page = 1) {
     loading.value = true
     try {
-      const { data } = await api.get('/works', { params: { page } })
-      works.value = data.data
-      return data
+      const result = await api.get('/works', { params: { page } })
+      works.value = result.data
+      return result
     } finally {
       loading.value = false
     }
   }
 
   async function fetchWork(id) {
-    const { data } = await api.get(`/works/${id}`)
-    currentWork.value = data
-    return data
+    const result = await api.get(`/works/${id}`)
+    currentWork.value = result
+    return result
   }
 
   async function createWork(storyTitle, storyContent, style) {
-    const { data } = await api.post('/works', { title: storyTitle, content: storyContent, style })
-    return data
+    const result = await api.post('/works', { title: storyTitle, content: storyContent, style })
+    return result
   }
 
   async function deleteWork(id) {
