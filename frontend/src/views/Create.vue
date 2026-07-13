@@ -80,6 +80,9 @@ async function aiRecommend() {
   try {
     const result = await api.post('/kling/recommend', { content: story.content, style: story.style, duration_hint: kling.video_duration })
     Object.assign(kling, result.recommended)
+    // 强制根据模型声音能力设置
+    const vm = videoModels.find(m => m.value === kling.video_model)
+    if (vm) kling.video_sound = vm.sound ? 'on' : 'off'
     analysis.value = result.analysis
     warnings.value = result.warnings || []
     if (warnings.value.length) warnings.value.forEach(w => ElMessage.warning(w.replace(/^[^\s]+\s/,'')))
@@ -210,7 +213,6 @@ onUnmounted(()=>stopPolling())
             <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.image_model" size="small" style="width:100%" ><el-option v-for="m in imageModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="分辨率"><el-select v-model="kling.image_resolution" size="small" style="width:100%" ><el-option v-for="r in resolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="small" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
-            <el-col :span="4"><el-form-item label="数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="small" style="width:100%"/></el-form-item></el-col>
           </el-row>
         </div>
         <div class="config-group"><h4>🎥 视频配置</h4>
