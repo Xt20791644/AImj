@@ -25,6 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/works/{id}', [WorkController::class, 'show']);
     Route::delete('/works/{id}', [WorkController::class, 'destroy']);
     Route::get('/works/{id}/timeline', [WorkController::class, 'timeline']);
+    // 精细模式分步API
+    Route::post('/works/{id}/script', [WorkController::class, 'confirmScript']);
+    Route::post('/works/{id}/images', [WorkController::class, 'generateImages']);
+    Route::post('/works/{id}/finalize', [WorkController::class, 'finalizeWork']);
 });
 
 // Admin
