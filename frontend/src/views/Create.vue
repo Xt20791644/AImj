@@ -166,7 +166,7 @@ onUnmounted(()=>stopPolling())
             <el-col :span="8"><el-form-item label="生成模型"><el-select v-model="kling.image_model" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="m in imageModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" ><el-option v-for="r in resolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="large" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
-            <el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="large" style="width:100%"/></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="1" :max="5" size="large" style="width:100%"/></el-form-item></el-col>
           </el-row>
           <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
           <div class="block-action"><el-button type="primary" size="large" @click="generateImages" :loading="loading"><span class="btn-icon">▣</span> 开始生成图片</el-button></div>
