@@ -9,6 +9,7 @@ echo "等待用户提交新作品...\n\n";
 $processedIds = [];
 $kling = app(App\Services\KlingService::class);
 $tts = app(App\Services\CosyVoiceService::class);
+$oss = app(App\Services\OssService::class);
 
 while (true) {
     $work = App\Models\Work::where('status', 'pending')
@@ -23,7 +24,7 @@ while (true) {
 
         try {
             $job = new App\Jobs\ProcessWorkJob($work->id);
-            $job->handle($kling, $tts);
+            $job->handle($kling, $tts, $oss);
             
             $work->refresh();
             echo "\n✅ 处理完成！\n";

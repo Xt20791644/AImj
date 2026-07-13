@@ -63,6 +63,7 @@ function styleLabel(s) { const m={realistic:'真人写实',anime:'日系动画',
                 <img v-if="w.output_cover" :src="w.output_cover" class="mw-img" />
                 <span v-else class="mw-icon">🎬</span>
                 <div class="mw-dur" v-if="w.duration">{{ w.duration }}s</div>
+                <div class="mw-status" :class="w.status">{{ w.status==='completed'?'✅完成':w.status==='failed'?'❌失败':w.status==='processing'?'⏳生成中':'📝草稿' }}</div>
               </div>
               <div class="mw-info">
                 <h4>{{ w.title }}</h4>
@@ -105,6 +106,8 @@ function styleLabel(s) { const m={realistic:'真人写实',anime:'日系动画',
 .mw-img{width:100%;height:100%;object-fit:cover}
 .mw-icon{font-size:36px;color:var(--text-tertiary)}
 .mw-dur{position:absolute;bottom:6px;right:6px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;font-family:var(--font-mono)}
+.mw-status{position:absolute;top:6px;left:6px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(0,0,0,0.7)}
+.mw-status.completed{color:var(--success)}.mw-status.failed{color:var(--danger)}.mw-status.processing{color:var(--warning)}
 .mw-info{padding:10px 12px}.mw-info h4{font-size:13px;color:var(--text-primary);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mw-date{font-size:11px;color:var(--text-tertiary)}
 .detail{padding:0}.detail-video{margin-bottom:16px}.no-video{height:300px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border-radius:var(--radius);color:var(--text-tertiary);font-size:24px}

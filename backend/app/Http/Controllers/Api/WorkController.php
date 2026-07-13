@@ -15,7 +15,7 @@ class WorkController extends Controller
     {
         $query = Work::with('user:id,name,avatar')->latest();
         
-        // ?my=1 只返回当前用户的作品
+        // ?my=1 只返回当前用户的作品（包含所有状态）
         if ($request->has('my')) {
             $query->where('user_id', $request->user()->id);
         } else {

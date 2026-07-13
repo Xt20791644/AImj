@@ -63,7 +63,7 @@ class OssService
     /**
      * PUT Object 到 OSS (REST API)
      */
-    private function putObject(string $objectPath, string $content, string $contentType): string
+    public function putObject(string $objectPath, string $content, string $contentType): string
     {
         $date = gmdate('D, d M Y H:i:s \G\M\T');
         $host = "{$this->bucket}.{$this->endpoint}";

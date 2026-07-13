@@ -1601,3 +1601,14 @@ Did you mean one of these?
 [2026-07-13 17:40:33] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"7d67cc04-d8f3-9b19-bf2c-f037968bb60d"}} 
 [2026-07-13 17:40:33] local.WARNING: Work 12: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
 [2026-07-13 17:40:33] local.INFO: Work 12 completed successfully  
+[2026-07-13 18:09:16] local.ERROR: Call to private method App\Services\OssService::putObject() from global scope {"exception":"[object] (Error(code: 0): Call to private method App\\Services\\OssService::putObject() from global scope at E:/prject/OpenCodePrject/aiduanju/backend/test_oss.php:12)
+[stacktrace]
+#0 {main}
+"} 
+[2026-07-13 18:09:44] local.ERROR: OSS PUT failed: 403  
+[2026-07-13 18:10:31] local.INFO: Work 14: Auto-upgraded video mode to pro for sound support  
+[2026-07-13 18:12:06] local.INFO: Work 14: Generated 3 images  
+[2026-07-13 18:12:07] local.WARNING: Work 14: Video generation failed - 可灵API失败: Camera control is not supported by the current model  
+[2026-07-13 18:12:07] local.ERROR: CosyVoice request failed {"status":401,"body":{"code":"InvalidApiKey","message":"No API-key provided.","request_id":"91016d9b-997d-925c-8271-b82dc7ab00ba"}} 
+[2026-07-13 18:12:07] local.WARNING: Work 14: TTS failed - CosyVoice 配音请求失败: No API-key provided.  
+[2026-07-13 18:12:07] local.INFO: Work 14 completed successfully  
