@@ -13,6 +13,8 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/kling/options', [KlingController::class, 'options']);
 Route::get('/kling/defaults', [KlingController::class, 'defaults']);
+Route::post('/kling/recommend', [KlingController::class, 'recommend']);
+Route::post('/kling/validate', [KlingController::class, 'validateConfig']);
 
 // Protected
 Route::middleware('auth:sanctum')->group(function () {

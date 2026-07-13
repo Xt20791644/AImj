@@ -13,13 +13,43 @@ const steps = [{t:'故事剧本',d:'输入大纲, AI生成剧本可编辑'},{t:'
 const story = reactive({ title: '', content: '', style: 'realistic' })
 const script = ref(''); const scriptEditing = ref(false); const scriptGenerated = ref(false)
 
-const options = ref(null); const presets = ref({})
-const kling = reactive({ preset:'short_drama', image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:3, video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_sound:'off', video_negative_prompt:'' })
+const options = ref(null)
+const kling = reactive({
+  image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:3,
+  video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'off',
+  video_negative_prompt:'', camera_type:'',
+})
 const generatedImages = ref([])
-const loading = ref(false); const workId = ref(null); let pollTimer = null
+const analysis = ref(null)
+const warnings = ref([])
+const loading = ref(false); const recommendLoading = ref(false)
+const workId = ref(null); let pollTimer = null
 
-onMounted(async()=>{try{const{data}=await api.get('/kling/options');options.value=data;presets.value=data.presets||{}}catch(e){}})
-function applyPreset(k){const p=presets.value[k];if(!p)return;Object.assign(kling,{preset:k,image_model:p.image_model,image_resolution:p.image_resolution,image_aspect_ratio:p.image_aspect_ratio,video_model:p.video_model,video_mode:p.video_mode,video_duration:p.video_duration,video_sound:p.video_sound||'off'})}
+onMounted(async()=>{try{const{data}=await api.get('/kling/options');options.value=data}catch(e){}})
+
+// AI 推荐配置
+async function aiRecommend() {
+  if (!story.content.trim()) { ElMessage.warning('请先输入故事大纲'); return }
+  recommendLoading.value = true
+  try {
+    const { data } = await api.post('/kling/recommend', { content: story.content, style: story.style, duration_hint: kling.video_duration })
+    Object.assign(kling, data.recommended)
+    analysis.value = data.analysis
+    warnings.value = data.warnings || []
+    if (warnings.value.length) warnings.value.forEach(w => ElMessage.warning(w.replace(/^[^\s]+\s/,'')))
+    else ElMessage.success('AI 已根据故事内容推荐最优配置')
+  } catch(e) { ElMessage.error('推荐失败') }
+  finally { recommendLoading.value = false }
+}
+
+// 校验配置
+async function validateConfig() {
+  if (!story.content.trim()) return
+  try {
+    const { data } = await api.post('/kling/validate', { content: story.content, config: { ...kling } })
+    warnings.value = data.warnings || []
+  } catch(e) {}
+}
 
 async function generateScript(){if(!story.title.trim()||!story.content.trim()){ElMessage.warning('请填写故事');return};loading.value=true;await new Promise(r=>setTimeout(r,1200));script.value=`【剧本】《${story.title}》\n\n`+story.content.split('\n').filter(l=>l.trim()).map((l,i)=>`第${i+1}场\n${l.trim()}\n`).join('\n');scriptGenerated.value=true;loading.value=false;ElMessage.success('剧本生成完成')}
 async function generateImages(){loading.value=true;await new Promise(r=>setTimeout(r,1500));const n=Math.max(3,Math.min(5,kling.image_n));generatedImages.value=Array.from({length:n},(_,i)=>({id:i+1,label:`场景 ${i+1}`,selected:false}));loading.value=false;ElMessage.success(`生成了 ${n} 张图片`)}
@@ -34,29 +64,24 @@ onUnmounted(()=>stopPolling())
 
 <template>
   <div class="create-page page-enter">
-    <div class="page-hero">
-      <h1 class="hero-title">创作工坊</h1>
-      <p class="hero-sub">AI驱动的短剧创作引擎 — 选择模式，开始创作</p>
-      <div class="tech-line"></div>
-    </div>
+    <div class="page-hero"><h1 class="hero-title">创作工坊</h1><p class="hero-sub">AI驱动的短剧创作引擎 — 选择模式，开始创作</p><div class="tech-line"></div></div>
 
     <!-- Mode Selection -->
     <div v-if="!currentMode" class="mode-grid">
       <div class="mode-card glass-panel glow" @click="currentMode='fine'">
         <div class="mc-icon">▣</div><h3 class="mc-title">精细模式</h3>
-        <p class="mc-desc">逐步引导创作流程：AI生成剧本可在线编辑 → 配置图片参数 → 选择满意的画面 → 合成视频配音导出</p>
+        <p class="mc-desc">逐步引导：AI生成剧本可编辑 → 配置图片参数 → 选择画面 → 合成视频配音</p>
         <div class="mc-footer"><span class="tech-badge">▸ 推荐 · 高质量可控</span></div>
       </div>
       <div class="mode-card glass-panel" @click="currentMode='fast'">
         <div class="mc-icon">▻</div><h3 class="mc-title">快速模式</h3>
-        <p class="mc-desc">输入故事大纲，AI接管全部流程：自动拆解分镜 → 生成画面 → 视频合成 → 配音导出，一键出片</p>
+        <p class="mc-desc">输入故事 → AI推荐配置 → 调整确认 → 一键出片</p>
         <div class="mc-footer"><span class="tech-badge">▸ 快捷 · 省心省力</span></div>
       </div>
     </div>
 
-    <!-- Fine Mode -->
+    <!-- ==================== FINE MODE ==================== -->
     <template v-if="currentMode==='fine'">
-      <!-- Steps -->
       <div class="steps-track" v-if="activeStep<3">
         <div v-for="(s,i) in steps" :key="i" class="st-node" :class="{done:i<activeStep,on:i===activeStep}">
           <div class="st-bullet">{{ i<activeStep?'✓':i+1 }}</div>
@@ -65,13 +90,12 @@ onUnmounted(()=>stopPolling())
         </div>
       </div>
 
-      <!-- Step 1 -->
+      <!-- Step 1: Story -->
       <div v-if="activeStep===0" class="step-block glass-panel glow">
         <div class="block-head"><span class="block-num">01</span><h2>故事剧本</h2></div>
         <el-row :gutter="16"><el-col :span="12"><el-form-item label="作品名称"><el-input v-model="story.title" placeholder="给你的短剧起一个名字" size="large"/></el-form-item></el-col><el-col :span="12"><el-form-item label="视觉风格"><el-select v-model="story.style" size="large" style="width:100%"><el-option v-for="s in [{v:'realistic',l:'真人写实'},{v:'anime',l:'日系动画'},{v:'3d',l:'3D动画'}]" :key="s.v" :label="s.l" :value="s.v"/></el-select></el-form-item></el-col></el-row>
-        <el-form-item label="故事大纲"><el-input v-model="story.content" type="textarea" :rows="6" placeholder="输入你的故事大纲，AI将自动生成完整剧本...&#10;&#10;例：都市白领林晨在30岁生日那天被公司裁员，心灰意冷的他在天桥下捡到一块旧怀表。当他拨动表针的那一刻，时间竟倒流回了三年前..."/></el-form-item>
+        <el-form-item label="故事大纲"><el-input v-model="story.content" type="textarea" :rows="6" placeholder="输入故事大纲，AI将自动生成完整剧本..."/></el-form-item>
         <div class="block-action"><el-button :loading="loading" :disabled="!story.title||!story.content" size="large" @click="generateScript"><span class="btn-icon">⟳</span> AI 生成剧本</el-button></div>
-
         <div v-if="scriptGenerated" class="script-panel glass-panel">
           <div class="sp-head"><h3>📜 剧本预览</h3><el-button size="small" text @click="scriptEditing=!scriptEditing">{{ scriptEditing?'完成编辑':'在线编辑' }}</el-button></div>
           <el-input v-if="scriptEditing" v-model="script" type="textarea" :rows="10"/>
@@ -80,62 +104,83 @@ onUnmounted(()=>stopPolling())
         </div>
       </div>
 
-      <!-- Step 2 -->
+      <!-- Step 2: Image Config -->
       <div v-if="activeStep===1" class="step-block glass-panel glow">
-        <div class="block-head"><span class="block-num">02</span><h2>图片生成</h2></div>
+        <div class="block-head"><span class="block-num">02</span><h2>图片生成</h2><el-button size="small" @click="aiRecommend" :loading="recommendLoading" style="margin-left:auto">🤖 AI 推荐配置</el-button></div>
         <div v-if="!generatedImages.length">
-          <el-row :gutter="16"><el-col :span="8"><el-form-item label="生成模型"><el-select v-model="kling.image_model" size="large" style="width:100%" v-if="options"><el-option v-for="(m,k) in options.image_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col><el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_resolutions" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col><el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col><el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="large" style="width:100%"/></el-form-item></el-col></el-row>
+          <el-row :gutter="16">
+            <el-col :span="8"><el-form-item label="生成模型"><el-select v-model="kling.image_model" size="large" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(m,k) in options.image_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_resolutions" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="large" style="width:100%"/></el-form-item></el-col>
+          </el-row>
+          <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
           <div class="block-action"><el-button type="primary" size="large" @click="generateImages" :loading="loading"><span class="btn-icon">▣</span> 开始生成图片</el-button></div>
         </div>
         <div v-else>
-          <p class="block-hint">点击选择满意的图片，至少选择一张继续</p>
-          <div class="img-grid">
-            <div v-for="img in generatedImages" :key="img.id" class="img-card glass-panel" :class="{sel:img.selected}" @click="toggleImage(img)">
-              <div class="img-placeholder">▣<p>{{ img.label }}</p></div>
-              <div v-if="img.selected" class="img-check">✓</div>
-            </div>
-          </div>
-          <div class="block-action"><span class="count-hint">已选 {{ generatedImages.filter(i=>i.selected).length }} / {{ generatedImages.length }}</span><el-button type="primary" size="large" @click="nextToVideo">进入下一步 → 视频合成</el-button></div>
+          <p class="block-hint">点击选择满意的图片</p>
+          <div class="img-grid"><div v-for="img in generatedImages" :key="img.id" class="img-card glass-panel" :class="{sel:img.selected}" @click="toggleImage(img)"><div class="img-placeholder">▣<p>{{ img.label }}</p></div><div v-if="img.selected" class="img-check">✓</div></div></div>
+          <div class="block-action"><span class="count-hint">已选 {{ generatedImages.filter(i=>i.selected).length }}/{{ generatedImages.length }}</span><el-button type="primary" size="large" @click="nextToVideo">下一步 → 视频合成</el-button></div>
         </div>
       </div>
 
-      <!-- Step 3 -->
+      <!-- Step 3: Video Config -->
       <div v-if="activeStep===2" class="step-block glass-panel glow">
-        <div class="block-head"><span class="block-num">03</span><h2>视频合成</h2></div>
-        <el-row :gutter="16"><el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%" v-if="options"><el-option v-for="(m,k) in options.video_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col><el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.video_modes" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col><el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.video_durations" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col><el-col :span="6"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关"/></el-form-item></el-col></el-row>
-        <el-form-item label="负向提示词（排除不需要的元素）"><el-input v-model="kling.video_negative_prompt" placeholder="画面抖动、变形、闪烁、模糊"/></el-form-item>
-        <div class="block-action"><span class="count-hint mono">消耗 50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成短剧</el-button></div>
+        <div class="block-head"><span class="block-num">03</span><h2>视频合成</h2><el-button size="small" @click="aiRecommend" :loading="recommendLoading" style="margin-left:auto">🤖 AI 推荐配置</el-button></div>
+        <el-row :gutter="16">
+          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(m,k) in options.video_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
+          <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.video_modes" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+          <el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(l,v) in options.video_durations" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+          <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关"/></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" v-if="options"><el-option v-for="(l,v) in options.camera_types" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+        </el-row>
+        <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
+        <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
+        <div class="block-action"><span class="count-hint mono">50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
       </div>
     </template>
 
-    <!-- Fast Mode -->
+    <!-- ==================== FAST MODE ==================== -->
     <div v-if="currentMode==='fast'" class="step-block glass-panel glow">
-      <div class="block-head"><span class="block-num">⚡</span><h2>快速模式 · 一键生成</h2></div>
-      <p class="block-hint">输入故事大纲，AI自动完成全流程，无需手动干预</p>
-      <el-row :gutter="16">
-        <el-col :span="12"><el-form-item label="作品名称"><el-input v-model="story.title" placeholder="给你的短剧起一个名字" size="large"/></el-form-item></el-col>
-        <el-col :span="12"><el-form-item label="质量预设">
-          <el-select v-model="kling.preset" size="large" style="width:100%" @change="applyPreset">
-            <el-option label="真人短剧 (推荐)" value="short_drama"/>
-            <el-option label="电影质感" value="cinematic"/>
-            <el-option label="快速预览" value="fast_preview"/>
-          </el-select>
-        </el-form-item></el-col>
-      </el-row>
-      <el-form-item label="故事大纲"><el-input v-model="story.content" type="textarea" :rows="6" placeholder="输入故事大纲，剩下的全部交给AI处理..."/></el-form-item>
+      <div class="block-head"><span class="block-num">⚡</span><h2>快速模式</h2><el-button size="small" @click="aiRecommend" :loading="recommendLoading" style="margin-left:auto">🤖 AI 分析推荐</el-button></div>
+      <p class="block-hint">输入故事大纲，点击 AI 分析让系统自动推荐最优配置，你也可以手动调整</p>
 
-      <!-- 预设参数展示 -->
-      <div class="preset-info glass-panel" style="padding:16px 20px;margin-bottom:16px">
-        <div class="pi-head"><span class="tech-badge">当前配置参数</span></div>
-        <div class="pi-grid">
-          <div class="pi-item"><span class="pi-label">视频模型</span><span class="pi-val mono">{{ kling.video_model || '-' }}</span></div>
-          <div class="pi-item"><span class="pi-label">画质模式</span><span class="pi-val mono">{{ kling.video_mode || '-' }}</span></div>
-          <div class="pi-item"><span class="pi-label">单段时长</span><span class="pi-val mono">{{ kling.video_duration || '5' }}秒</span></div>
-          <div class="pi-item"><span class="pi-label">图片模型</span><span class="pi-val mono">{{ kling.image_model || '-' }}</span></div>
-          <div class="pi-item"><span class="pi-label">分辨率</span><span class="pi-val mono">{{ kling.image_resolution || '-' }}</span></div>
-          <div class="pi-item"><span class="pi-label">画面比例</span><span class="pi-val mono">{{ kling.image_aspect_ratio || '-' }}</span></div>
+      <!-- Story -->
+      <el-row :gutter="16"><el-col :span="12"><el-form-item label="作品名称"><el-input v-model="story.title" placeholder="给你的短剧起个名字" size="large"/></el-form-item></el-col><el-col :span="12"><el-form-item label="视觉风格"><el-select v-model="story.style" size="large" style="width:100%"><el-option v-for="s in [{v:'realistic',l:'真人写实'},{v:'anime',l:'日系动画'},{v:'3d',l:'3D动画'}]" :key="s.v" :label="s.l" :value="s.v"/></el-select></el-form-item></el-col></el-row>
+      <el-form-item label="故事大纲"><el-input v-model="story.content" type="textarea" :rows="6" placeholder="输入故事大纲，AI将自动分析并推荐最优配置..."/></el-form-item>
+
+      <!-- Analysis -->
+      <div v-if="analysis" class="analysis-bar glass-panel">
+        <span class="mono" style="color:var(--accent)">📊 分析: {{ analysis.char_count }}字 · {{ analysis.scene_count }}场景 · {{ analysis.duration_reason }}</span>
+      </div>
+
+      <!-- Full Config Panel -->
+      <div class="config-section">
+        <div class="config-group"><h4>🖼️ 图片配置</h4>
+          <el-row :gutter="12">
+            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.image_model" size="small" style="width:100%" v-if="options"><el-option v-for="(m,k) in options.image_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="分辨率"><el-select v-model="kling.image_resolution" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_resolutions" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="4"><el-form-item label="数量"><el-input-number v-model="kling.image_n" :min="3" :max="5" size="small" style="width:100%"/></el-form-item></el-col>
+          </el-row>
+        </div>
+        <div class="config-group"><h4>🎥 视频配置</h4>
+          <el-row :gutter="12">
+            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(m,k) in options.video_models" :key="k" :label="m.name" :value="k"/></el-select></el-form-item></el-col>
+            <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.video_modes" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig" v-if="options"><el-option v-for="(l,v) in options.video_durations" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%" v-if="options"><el-option v-for="(l,v) in options.image_aspect_ratios" :key="v" :label="l" :value="v"/></el-select></el-form-item></el-col>
+            <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small"/></el-form-item></el-col>
+          </el-row>
         </div>
       </div>
+
+      <!-- Warnings -->
+      <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field||w" class="warn-item">{{ typeof w === 'string' ? w : '⚠ ' + w.message }}</span></div>
+
       <div class="block-action"><span class="count-hint mono">50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
     </div>
 
@@ -150,12 +195,11 @@ onUnmounted(()=>stopPolling())
 </template>
 
 <style scoped>
-.create-page{max-width:960px;margin:0 auto}
-.page-hero{margin-bottom:32px;text-align:center}
+.create-page{max-width:1000px;margin:0 auto}
+.page-hero{margin-bottom:28px;text-align:center}
 .hero-title{font-size:34px;font-weight:800;color:var(--text-primary);letter-spacing:-0.02em;margin-bottom:6px}
 .hero-sub{color:var(--text-tertiary);font-size:15px;margin-bottom:20px}
 .tech-line{height:1px;background:linear-gradient(90deg,transparent,var(--border-accent),transparent);width:200px;margin:0 auto}
-
 .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px}
 .mode-card{padding:32px;border-radius:var(--radius-lg);cursor:pointer;transition:all var(--transition);position:relative;overflow:hidden}
 .mode-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity var(--transition)}
@@ -166,7 +210,6 @@ onUnmounted(()=>stopPolling())
 .mc-title{font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:8px}
 .mc-desc{color:var(--text-secondary);font-size:13px;line-height:1.7;margin-bottom:16px}
 .mc-footer{margin-top:8px}
-
 .steps-track{display:flex;align-items:flex-start;margin-bottom:28px;padding:0 16px}
 .st-node{flex:1;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--radius);background:var(--bg-surface);border:1px solid var(--border-default);opacity:0.4;transition:all var(--transition);position:relative}
 .st-node.on{opacity:1;border-color:var(--border-accent);box-shadow:var(--shadow-glow)}
@@ -177,9 +220,8 @@ onUnmounted(()=>stopPolling())
 .st-info{display:flex;flex-direction:column}
 .st-label{font-size:14px;color:var(--text-primary);font-weight:600}
 .st-hint{font-size:11px;color:var(--text-tertiary);margin-top:2px}
-.st-connector{flex:1;height:1px;background:var(--border-default);margin:0 -8px;position:absolute;right:-20px;top:28px;width:20px}
+.st-connector{position:absolute;right:-20px;top:28px;width:20px;height:1px;background:var(--border-default)}
 .st-connector.filled{background:var(--success)}
-
 .step-block{margin-bottom:24px;padding:28px;border-radius:var(--radius-lg)}
 .step-block.glow{border-color:var(--border-accent)}
 .step-block.glow-strong{border-color:var(--border-glow);box-shadow:0 0 40px var(--accent-glow);animation:pulse-glow 4s ease-in-out infinite}
@@ -190,12 +232,10 @@ onUnmounted(()=>stopPolling())
 .block-action{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)}
 .btn-icon{font-size:16px;margin-right:4px}
 .count-hint{color:var(--text-tertiary);font-size:13px}
-
 .script-panel{margin-top:20px;padding:20px;border-radius:var(--radius)}
 .sp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .sp-head h3{color:var(--accent);font-size:15px;font-weight:600}
 .sp-text{color:var(--text-secondary);white-space:pre-wrap;font-family:var(--font-body);line-height:1.9;font-size:14px;background:rgba(255,255,255,0.015);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border-subtle)}
-
 .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .img-card{cursor:pointer;overflow:hidden;position:relative;transition:all var(--transition);padding:0}
 .img-card:hover{transform:translateY(-2px)}
@@ -203,11 +243,10 @@ onUnmounted(()=>stopPolling())
 .img-placeholder{height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-elevated);font-size:36px;color:var(--text-tertiary)}
 .img-placeholder p{font-size:11px;margin-top:8px;color:var(--text-tertiary)}
 .img-check{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 0 12px var(--accent)}
-
-.preset-info{border-radius:var(--radius)}
-.pi-head{margin-bottom:12px}
-.pi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.pi-item{display:flex;flex-direction:column;gap:4px;padding:10px 14px;background:var(--bg-elevated);border-radius:var(--radius-sm);border:1px solid var(--border-subtle)}
-.pi-label{font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em}
-.pi-val{font-size:14px;color:var(--accent);font-weight:600}
+.analysis-bar{padding:10px 16px;margin-bottom:16px;border-radius:var(--radius-sm);font-size:12px}
+.config-section{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
+.config-group{background:var(--bg-elevated);padding:16px;border-radius:var(--radius);border:1px solid var(--border-subtle)}
+.config-group h4{color:var(--accent);font-size:13px;font-weight:600;margin-bottom:12px;font-family:var(--font-mono);letter-spacing:0.03em;text-transform:uppercase}
+.warn-panel{display:flex;flex-direction:column;gap:6px;padding:12px 16px;margin-bottom:16px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm)}
+.warn-item{color:var(--warning);font-size:12px;line-height:1.6}
 </style>
