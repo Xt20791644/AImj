@@ -79,10 +79,6 @@ class KlingController extends Controller
         if ($charCount < 50) {
             $warnings[] = "💡 故事大纲较短（{$charCount} 字），AI 可发挥空间有限。建议补充更多场景描述和人物细节，获得更好的生成效果。";
         }
-        if (!$hasDialogue && $charCount > 200) {
-            $warnings[] = "🔇 未检测到对话内容，如需配音建议在故事中加入人物对话。";
-        }
-
         return response()->json([
             'recommended' => [
                 'image_model' => $recImageModel,
@@ -131,10 +127,6 @@ class KlingController extends Controller
         if (($config['image_n'] ?? 3) > 5) {
             $warnings[] = ['field' => 'image_n', 'message' => '建议图片数量不超过 5 张'];
         }
-        if (($config['video_sound'] ?? 'off') === 'on' && !preg_match('/说|道|问|答|："|」/i', $content)) {
-            $warnings[] = ['field' => 'video_sound', 'message' => '故事中未检测到对话，建议关闭声音或添加对话内容'];
-        }
-
         return response()->json(['warnings' => $warnings, 'valid' => empty($warnings)]);
     }
 }
