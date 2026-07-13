@@ -58,6 +58,8 @@ const generatedImages = ref([])
 const analysis = ref(null)
 const warnings = ref([])
 const loading = ref(false); const recommendLoading = ref(false)
+const genProgress = ref(0)
+const genStatus = ref('')
 
 // 当前视频模型是否支持声音
 const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
@@ -99,7 +101,7 @@ function toggleImage(img){img.selected=!img.selected}
 function nextToVideo(){if(!generatedImages.value.filter(i=>i.selected).length){ElMessage.warning('至少选一张');return};activeStep.value=2}
 async function finalGenerate(){loading.value=true;try{const result=await api.post('/works',{title:story.title,content:story.content,style:story.style,mode:'fine',script:script.value,kling_config:{...kling}});workId.value=result.id;creditStore.fetchBalance();activeStep.value=3;startPolling();ElMessage.success('已提交')}catch(e){loading.value=false;if(e.response?.status===402){ElMessage.error('积分不足');router.push('/profile')}}}
 async function fastCreate(){if(!story.title.trim()||!story.content.trim()){ElMessage.warning('请填写');return};if(!auth.isLoggedIn){router.push('/login');return};loading.value=true;try{const result=await api.post('/works',{title:story.title,content:story.content,style:story.style,mode:'fast',kling_config:{...kling}});workId.value=result.id;creditStore.fetchBalance();activeStep.value=3;startPolling()}catch(e){loading.value=false;if(e.response?.status===402){ElMessage.error('积分不足');router.push('/profile')}}}
-function startPolling(){pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);if(r.status==='completed'){stopPolling();ElMessage.success('完成！');setTimeout(()=>router.push('/works'),1000)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败')}}catch(e){}},2000)}
+function startPolling(){pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);genProgress.value=r.progress||0;genStatus.value=r.status_text||'处理中...';if(r.status==='completed'){stopPolling();ElMessage.success('创作完成！');setTimeout(()=>router.push('/works'),1500)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败：'+(r.status_text||'未知'))}}catch(e){}},2000)}
 function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
 onUnmounted(()=>stopPolling())
 </script>
@@ -226,12 +228,23 @@ onUnmounted(()=>stopPolling())
       <div class="block-action"><span class="count-hint mono">50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
     </div>
 
-    <!-- Progress -->
-    <div v-if="activeStep===3" class="step-block glass-panel glow-strong" style="text-align:center;padding:48px">
-      <h2 style="color:var(--accent);font-size:22px;margin-bottom:8px">创作引擎运行中</h2>
-      <p style="color:var(--text-tertiary);margin-bottom:28px;font-size:14px">AI正在处理你的短剧，请稍候片刻...</p>
-      <el-progress :percentage="50" :stroke-width="16" :indeterminate="true"/>
-      <p style="color:var(--text-tertiary);margin-top:20px;font-size:12px;font-family:var(--font-mono)">STATUS: PROCESSING · 可离开页面稍后查看</p>
+    <!-- Fullscreen Progress Overlay -->
+    <div v-if="activeStep===3" class="progress-overlay">
+      <div class="progress-modal">
+        <div class="pm-spinner"><div class="pm-ring"></div><div class="pm-core">◆</div></div>
+        <h2 class="pm-title">创作引擎运行中</h2>
+        <div class="pm-bar"><el-progress :percentage="genProgress" :stroke-width="12" :text-inside="true" :status="genProgress===100?'success':''" /></div>
+        <p class="pm-status mono">{{ genStatus || '正在初始化...' }}</p>
+        <div class="pm-steps">
+          <span :class="{done:genProgress>=15}">剧本分析</span><span class="pm-arrow">→</span>
+          <span :class="{done:genProgress>=30}">角色提取</span><span class="pm-arrow">→</span>
+          <span :class="{done:genProgress>=45}">分镜生成</span><span class="pm-arrow">→</span>
+          <span :class="{done:genProgress>=60}">画面渲染</span><span class="pm-arrow">→</span>
+          <span :class="{done:genProgress>=80}">视频生成</span><span class="pm-arrow">→</span>
+          <span :class="{done:genProgress>=100}">导出完成</span>
+        </div>
+        <p class="pm-hint">可关闭此页面，稍后在作品广场查看</p>
+      </div>
     </div>
   </div>
 </template>
@@ -291,4 +304,20 @@ onUnmounted(()=>stopPolling())
 .config-group h4{color:var(--accent);font-size:13px;font-weight:600;margin-bottom:12px;font-family:var(--font-mono);letter-spacing:0.03em;text-transform:uppercase}
 .warn-panel{display:flex;flex-direction:column;gap:6px;padding:12px 16px;margin-bottom:16px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm)}
 .warn-item{color:var(--warning);font-size:12px;line-height:1.6}
+
+/* Progress Overlay */
+.progress-overlay{position:fixed;inset:0;z-index:1000;background:rgba(6,8,13,0.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center}
+.progress-modal{text-align:center;max-width:520px;padding:48px}
+.pm-spinner{position:relative;width:80px;height:80px;margin:0 auto 28px}
+.pm-ring{position:absolute;inset:0;border:2px solid var(--border-strong);border-top-color:var(--accent);border-radius:50%;animation:spin 1.5s linear infinite}
+.pm-core{position:absolute;inset:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent);text-shadow:0 0 16px var(--accent)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pm-title{font-size:24px;font-weight:800;color:var(--text-bright);margin-bottom:24px}
+.pm-bar{max-width:400px;margin:0 auto 20px}
+.pm-status{font-size:14px;color:var(--accent);margin-bottom:24px;min-height:20px}
+.pm-steps{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+.pm-steps span{font-size:11px;color:var(--text-tertiary);transition:all var(--transition)}
+.pm-steps span.done{color:var(--success)}
+.pm-arrow{color:var(--border-strong)!important;font-size:10px}
+.pm-hint{font-size:12px;color:var(--text-tertiary);font-family:var(--font-mono)}
 </style>
