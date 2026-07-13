@@ -74,10 +74,10 @@ async function aiRecommend() {
   if (!story.content.trim()) { ElMessage.warning('请先输入故事大纲'); return }
   recommendLoading.value = true
   try {
-    const { data } = await api.post('/kling/recommend', { content: story.content, style: story.style, duration_hint: kling.video_duration })
-    Object.assign(kling, data.recommended)
-    analysis.value = data.analysis
-    warnings.value = data.warnings || []
+    const result = await api.post('/kling/recommend', { content: story.content, style: story.style, duration_hint: kling.video_duration })
+    Object.assign(kling, result.recommended)
+    analysis.value = result.analysis
+    warnings.value = result.warnings || []
     if (warnings.value.length) warnings.value.forEach(w => ElMessage.warning(w.replace(/^[^\s]+\s/,'')))
     else ElMessage.success('AI 已根据故事内容推荐最优配置')
   } catch(e) { ElMessage.error('推荐失败') }
@@ -88,8 +88,8 @@ async function aiRecommend() {
 async function validateConfig() {
   if (!story.content.trim()) return
   try {
-    const { data } = await api.post('/kling/validate', { content: story.content, config: { ...kling } })
-    warnings.value = data.warnings || []
+  const result = await api.post('/kling/validate', { content: story.content, config: { ...kling } })
+  warnings.value = result.warnings || []
   } catch(e) {}
 }
 

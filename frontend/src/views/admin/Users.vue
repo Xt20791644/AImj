@@ -8,7 +8,7 @@ const loading = ref(true)
 
 async function fetchUsers() {
   loading.value = true
-  try { const { data } = await api.get('/admin/users'); users.value = data.data || data } catch (e) {}
+  try { const result = await api.get('/admin/users'); users.value = result.data || result } catch (e) {}
   loading.value = false
 }
 onMounted(fetchUsers)

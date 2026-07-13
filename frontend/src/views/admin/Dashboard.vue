@@ -6,7 +6,7 @@ const stats = ref({ users: 0, works: 0, revenue: 0, credits: 0 })
 const loading = ref(true)
 
 onMounted(async () => {
-  try { const { data } = await api.get('/admin/stats'); stats.value = data } catch (e) {}
+  try { const result = await api.get('/admin/stats'); stats.value = result } catch (e) {}
   loading.value = false
 })
 </script>
