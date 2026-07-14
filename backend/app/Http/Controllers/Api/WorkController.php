@@ -34,7 +34,12 @@ class WorkController extends Controller
             'style' => 'required|in:realistic,anime,3d,cyberpunk',
         ]);
 
-        $cost = config('services.credits.cost_per_generation', 50);
+        // 动态计算积分（根据模型+画质+数量+参考图）
+        $imageModel = $klingConfig['image_model'] ?? 'kling-v3';
+        $resolution = $klingConfig['image_resolution'] ?? '2k';
+        $imageCount = (int)($klingConfig['image_n'] ?? 1);
+        $refImageCount = count($request->ref_images_data ?? []);
+        $cost = KlingConfig::calcImageCost($imageModel, $resolution, $imageCount, $refImageCount);
         $user = $request->user();
         if ($user->credits < $cost) {
             return response()->json(['message' => '积分不足，请先充值'], 402);
@@ -54,7 +59,8 @@ class WorkController extends Controller
                 'mode' => $mode,
                 'script' => $request->script ?? null,
                 'kling_config' => $klingConfig,
-                'selected_images' => $request->selected_images ?? [],
+                'ref_images' => $request->ref_images_data ?? [],
+                'generated_images' => $request->generated_images ?? [],
             ],
         ]);
 
