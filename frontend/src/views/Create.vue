@@ -28,6 +28,7 @@ const imageModels = [
 const videoModels = [
   {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro'],pricing:{std:1,pro:2}},
   {value:'kling-v3',label:'Kling 3.0',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro','4k'],pricing:{std:1,pro:2,'4k':6}},
+  {value:'kling-v3-omni',label:'Kling 3.0 Omni',sound:true,camera:false,cfg:false,t2v:false,modes:['std','pro','4k'],pricing:{std:1,pro:2,'4k':6},videoRequired:true},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [{value:'9:16',label:'9:16 竖屏(抖音·推荐)'},{value:'16:9',label:'16:9 横屏'},{value:'1:1',label:'1:1 方形'},{value:'4:3',label:'4:3 标准'},{value:'3:4',label:'3:4 竖屏'},{value:'3:2',label:'3:2 宽屏'},{value:'2:3',label:'2:3 竖长'},{value:'auto',label:'自动'}]

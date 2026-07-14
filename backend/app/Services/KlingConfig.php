@@ -95,6 +95,15 @@ class KlingConfig
             'pricing' => ['std' => 1, 'pro' => 2, '4k' => 6],
             'default_duration' => '10',
         ],
+        'kling-v3-omni' => [
+            'name' => 'Kling 3.0 Omni',
+            'modes' => ['std', 'pro', '4k'],
+            'durations' => ['5','6','7','8','9','10','11','12','13','14','15'],
+            'supports' => ['omni_video', 'sound'],
+            'video_required' => true,
+            'pricing' => ['std' => 1, 'pro' => 2, '4k' => 6],
+            'default_duration' => '10',
+        ],
     ];
 
     const IMAGE_RESOLUTIONS = ['1k' => '1K 标清', '2k' => '2K 高清', '4k' => '4K 超清'];
