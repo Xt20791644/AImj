@@ -26,18 +26,18 @@ const imageModels = [
 ]
 
 const videoModels = [
-  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,soundLocked:true,resolutions:['std','pro']},
-  {value:'kling-v3',label:'Kling 3.0',sound:true,resolutions:['std','pro','4k']},
-  {value:'kling-v3-omni',label:'Kling 3.0 Omni',sound:true,resolutions:['std','pro','4k'],videoRef:true},
-  {value:'kling-o1',label:'Kling O1',sound:true,resolutions:['std','pro'],videoRef:true},
-  {value:'kling-v2-6',label:'Kling 2.6',sound:true,resolutions:['std','pro'],soundGate:['std']},
-  {value:'kling-v2-5-turbo',label:'Kling 2.5 Turbo',sound:false,resolutions:['std','pro']},
-  {value:'kling-v2-1',label:'Kling 2.1',sound:false,resolutions:['std','pro']},
-  {value:'kling-v2-1-master',label:'Kling 2.1 Master',sound:false,resolutions:['pro']},
-  {value:'kling-v2-master',label:'Kling 2.0 Master',sound:false,resolutions:['pro']},
-  {value:'kling-v1-6',label:'Kling 1.6',sound:false,resolutions:['std','pro'],multiRef:3},
-  {value:'kling-v1-5',label:'Kling 1.5',sound:false,resolutions:['std','pro']},
-  {value:'kling-v1',label:'Kling 1.0',sound:false,resolutions:['std','pro']},
+  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo (快速·有声·推荐)',sound:true,soundLocked:true,resolutions:['std','pro']},
+  {value:'kling-v3',label:'Kling 3.0 (旗舰·4K·有声/无声)',sound:true,resolutions:['std','pro','4k']},
+  {value:'kling-v3-omni',label:'Kling 3.0 Omni (视频编辑·4K·有声/无声)',sound:true,resolutions:['std','pro','4k'],videoRef:true},
+  {value:'kling-o1',label:'Kling O1 (视频参考·有声/无声)',sound:true,resolutions:['std','pro'],videoRef:true},
+  {value:'kling-v2-6',label:'Kling 2.6 (经典·运镜·有声/无声)',sound:true,resolutions:['std','pro'],soundGate:['std']},
+  {value:'kling-v2-5-turbo',label:'Kling 2.5 Turbo (快速·无声)',sound:false,resolutions:['std','pro']},
+  {value:'kling-v2-1',label:'Kling 2.1 (稳定·无声)',sound:false,resolutions:['std','pro']},
+  {value:'kling-v2-1-master',label:'Kling 2.1 Master (专业·仅1080P·无声)',sound:false,resolutions:['pro']},
+  {value:'kling-v2-master',label:'Kling 2.0 Master (专业·仅1080P·无声)',sound:false,resolutions:['pro']},
+  {value:'kling-v1-6',label:'Kling 1.6 (多图参考·无声)',sound:false,resolutions:['std','pro'],multiRef:3},
+  {value:'kling-v1-5',label:'Kling 1.5 (基础·无声)',sound:false,resolutions:['std','pro']},
+  {value:'kling-v1',label:'Kling 1.0 (入门·无声)',sound:false,resolutions:['std','pro']},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [{value:'9:16',label:'9:16 竖屏(抖音·推荐)'},{value:'16:9',label:'16:9 横屏'},{value:'1:1',label:'1:1 方形'},{value:'4:3',label:'4:3 标准'},{value:'3:4',label:'3:4 竖屏'},{value:'3:2',label:'3:2 宽屏'},{value:'2:3',label:'2:3 竖长'},{value:'auto',label:'自动'}]
