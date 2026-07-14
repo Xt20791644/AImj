@@ -118,7 +118,6 @@ async function aiRecommend() {
       <el-select v-model="config.video_model" size="large" style="width:240px"><el-option v-for="m in videoModels" :key="m.value" :label="m.label + (isRemakeMode&&m.value!=='kling-v3-omni'?' 🔒':'')" :value="m.value" :disabled="isRemakeMode && m.value!=='kling-v3-omni'"/></el-select>
       <el-select v-model="config.aspect_ratio" size="large" style="width:170px"><el-option v-for="r in ratios" :key="r.value" :label="r.label" :value="r.value"/></el-select>
       <el-select v-model="config.duration" size="large" style="width:120px"><el-option v-for="d in durations" :key="d" :label="d+'秒'" :value="d"/></el-select>
-      <el-button size="large" :loading="recommendLoading" @click="aiRecommend">🤖 AI推荐分析</el-button>
     </div>
 
     <!-- Scenarios -->
