@@ -1812,3 +1812,7 @@ Did you mean one of these?
 [stacktrace]
 #0 {main}
 "} 
+[2026-07-14 15:36:46] local.ERROR: Cannot use App\Services\OssService as OssService because the name is already in use {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Cannot use App\\Services\\OssService as OssService because the name is already in use at E:/prject/OpenCodePrject/aiduanju/backend/app/Jobs/ProcessWorkJob.php:18)
+[stacktrace]
+#0 {main}
+"} 

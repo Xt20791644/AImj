@@ -15,13 +15,10 @@ function handleLogout() { auth.logout(); router.push('/') }
         </router-link>
         <nav class="h-nav">
           <router-link to="/create" :class="{ on: route.path.startsWith('/create') }">
-            <span class="nav-icon">▸</span>创作工坊
-          </router-link>
-          <router-link to="/works" :class="{ on: route.path==='/works' }">
-            <span class="nav-icon">▹</span>作品广场
+            <span class="nav-icon">▸</span>AI创作
           </router-link>
           <router-link to="/studio" :class="{ on: route.path.startsWith('/studio') }">
-            <span class="nav-icon">▹</span>创作工作台
+            <span class="nav-icon">▹</span>短剧Agent
           </router-link>
         </nav>
       </div>
