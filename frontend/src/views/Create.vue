@@ -26,17 +26,7 @@ const imageModels = [
 ]
 
 const videoModels = [
-  {value:'kling-v3',label:'Kling V3 (旗舰)',sound:true,camera:true,cfg:true,t2v:true},
-  {value:'kling-v3-omni',label:'Kling V3 Omni (全能)',sound:true,camera:true,cfg:true,t2v:true},
-  {value:'kling-v2-6',label:'Kling V2.6 (推荐)',sound:true,camera:true,cfg:false,t2v:true},
-  {value:'kling-video-o1',label:'Kling Video O1 (专业)',sound:true,camera:false,cfg:false,t2v:false},
-  {value:'kling-v2-5-turbo',label:'Kling V2.5 Turbo (快速)',sound:false,camera:false,cfg:false,t2v:true},
-  {value:'kling-v2-1-master',label:'Kling V2.1 Master',sound:false,camera:false,cfg:false,t2v:false},
-  {value:'kling-v2-1',label:'Kling V2.1',sound:false,camera:false,cfg:false,t2v:false},
-  {value:'kling-v2-master',label:'Kling V2 Master',sound:false,camera:false,cfg:false,t2v:false},
-  {value:'kling-v1-6',label:'Kling V1.6',sound:false,camera:false,cfg:true,t2v:false},
-  {value:'kling-v1-5',label:'Kling V1.5',sound:false,camera:false,cfg:true,t2v:false},
-  {value:'kling-v1',label:'Kling V1',sound:false,camera:false,cfg:true,t2v:false},
+  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro'],pricing:{std:1,pro:2}},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [{value:'9:16',label:'9:16 竖屏(抖音·推荐)'},{value:'16:9',label:'16:9 横屏'},{value:'1:1',label:'1:1 方形'},{value:'4:3',label:'4:3 标准'},{value:'3:4',label:'3:4 竖屏'},{value:'3:2',label:'3:2 宽屏'},{value:'2:3',label:'2:3 竖长'},{value:'auto',label:'自动'}]
@@ -46,7 +36,7 @@ const cameraTypes = [{value:'simple',label:'自定义运镜'},{value:'down_back'
 
 const kling = reactive({
   image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:1,
-  video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'on',
+  video_model:'kling-v3-turbo', video_mode:'pro', video_duration:'10', video_aspect_ratio:'9:16', video_sound:'on',
   video_negative_prompt:'', camera_type:'',
 })
 
@@ -90,6 +80,13 @@ const availableVideoModels = computed(() => {
     disabled: (hasImages && !m.value.includes('v2-') && !m.value.includes('v3') && !m.t2v && m.value !== 'kling-video-o1')
       ? false : (!hasImages && !m.t2v)
   }))
+})
+
+// 视频积分: 单价/秒 × 时长
+const videoCost = computed(() => {
+  const m = videoModels.find(x => x.value === kling.video_model)
+  if (!m || !m.pricing) return 10
+  return (m.pricing[kling.video_mode] || 2) * parseInt(kling.video_duration)
 })
 
 const hasVideoRef = computed(() => videoRefCount.value > 0)

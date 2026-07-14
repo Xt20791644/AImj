@@ -79,17 +79,14 @@ class KlingConfig
     // 视频模型 (保持不变)
     // ============================================
     const VIDEO_MODELS = [
-        'kling-v3' => ['name' => 'Kling V3 (旗舰)', 'modes' => ['std', 'pro', '4k'], 'durations' => ['5', '10', '15'], 'supports' => ['image2video', 'text2video', 'multi_shot', 'sound', 'aspect_ratio']],
-        'kling-v3-omni' => ['name' => 'Kling V3 Omni', 'modes' => ['std', 'pro', '4k'], 'durations' => ['5', '10', '15'], 'supports' => ['image2video', 'text2video', 'multi_shot', 'sound', 'aspect_ratio']],
-        'kling-v2-6' => ['name' => 'Kling V2.6 (推荐)', 'modes' => ['std', 'pro'], 'durations' => ['3','4','5','6','7','8','9','10','11','12','13','14','15'], 'supports' => ['image2video', 'camera_control', 'image_tail', 'text2video', 'sound']],
-        'kling-video-o1' => ['name' => 'Kling Video O1', 'modes' => ['pro', '4k'], 'durations' => ['5', '10', '15'], 'supports' => ['image2video', 'multi_shot', 'sound', 'aspect_ratio']],
-        'kling-v2-5-turbo' => ['name' => 'Kling V2.5 Turbo', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video', 'text2video']],
-        'kling-v2-1-master' => ['name' => 'Kling V2.1 Master', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video']],
-        'kling-v2-1' => ['name' => 'Kling V2.1', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video']],
-        'kling-v2-master' => ['name' => 'Kling V2 Master', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video']],
-        'kling-v1-6' => ['name' => 'Kling V1.6', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video']],
-        'kling-v1-5' => ['name' => 'Kling V1.5', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video']],
-        'kling-v1' => ['name' => 'Kling V1', 'modes' => ['std', 'pro'], 'durations' => ['5', '10'], 'supports' => ['image2video']],
+        'kling-v3-turbo' => [
+            'name' => 'Kling 3.0 Turbo',
+            'modes' => ['std', 'pro'],
+            'durations' => ['5','6','7','8','9','10','11','12','13','14','15'],
+            'supports' => ['image2video', 'text2video', 'sound'],
+            'pricing' => ['std' => 1, 'pro' => 2], // 积分/秒
+            'default_duration' => '10',
+        ],
     ];
 
     const IMAGE_RESOLUTIONS = ['1k' => '1K 标清', '2k' => '2K 高清', '4k' => '4K 超清'];
@@ -100,9 +97,9 @@ class KlingConfig
     const CAMERA_CONFIGS = ['horizontal' => ['label' => '水平移动', 'min' => -10, 'max' => 10, 'step' => 0.5], 'vertical' => ['label' => '垂直移动', 'min' => -10, 'max' => 10, 'step' => 0.5], 'pan' => ['label' => '水平摇镜', 'min' => -10, 'max' => 10, 'step' => 0.5], 'tilt' => ['label' => '垂直倾斜', 'min' => -10, 'max' => 10, 'step' => 0.5], 'roll' => ['label' => '旋转', 'min' => -10, 'max' => 10, 'step' => 0.5], 'zoom' => ['label' => '缩放', 'min' => -10, 'max' => 10, 'step' => 0.5]];
 
     const PRESETS = [
-        'short_drama' => ['name' => '真人短剧 (推荐)', 'image_model' => 'kling-v3', 'image_resolution' => '2k', 'image_aspect_ratio' => '9:16', 'video_model' => 'kling-v2-6', 'video_mode' => 'pro', 'video_duration' => '5', 'video_sound' => 'off'],
-        'cinematic' => ['name' => '电影质感', 'image_model' => 'kling-v3-omni', 'image_resolution' => '2k', 'image_aspect_ratio' => '16:9', 'video_model' => 'kling-v3', 'video_mode' => 'pro', 'video_duration' => '10', 'video_sound' => 'off'],
-        'fast_preview' => ['name' => '快速预览', 'image_model' => 'kling-v2-1', 'image_resolution' => '1k', 'image_aspect_ratio' => '9:16', 'video_model' => 'kling-v2-5-turbo', 'video_mode' => 'std', 'video_duration' => '5', 'video_sound' => 'off'],
+        'short_drama' => ['name' => '真人短剧 (推荐)', 'image_model' => 'kling-v3', 'image_resolution' => '2k', 'image_aspect_ratio' => '9:16', 'video_model' => 'kling-v3-turbo', 'video_mode' => 'pro', 'video_duration' => '10', 'video_sound' => 'on'],
+        'cinematic' => ['name' => '电影质感', 'image_model' => 'kling-v3-omni', 'image_resolution' => '2k', 'image_aspect_ratio' => '16:9', 'video_model' => 'kling-v3-turbo', 'video_mode' => 'pro', 'video_duration' => '10', 'video_sound' => 'on'],
+        'fast_preview' => ['name' => '快速预览', 'image_model' => 'kling-v2-1', 'image_resolution' => '1k', 'image_aspect_ratio' => '9:16', 'video_model' => 'kling-v3-turbo', 'video_mode' => 'std', 'video_duration' => '10', 'video_sound' => 'on'],
     ];
 
     /** 计算图片生成积分 */
@@ -127,6 +124,15 @@ class KlingConfig
         }
 
         return $unit * $imageCount;
+    }
+
+    /** 计算视频生成积分 */
+    public static function calcVideoCost(string $model, string $mode, int $duration): int
+    {
+        $m = self::VIDEO_MODELS[$model] ?? null;
+        if (!$m || !isset($m['pricing'])) return $duration * 2;
+        $rate = $m['pricing'][$mode] ?? 2;
+        return $rate * $duration;
     }
 
     /** 获取模型支持的分辨率列表 */
