@@ -1800,3 +1800,11 @@ Did you mean one of these?
 #64 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('E://prject//OpenC...')
 #65 {main}
 "} 
+[2026-07-14 15:09:56] local.ERROR: Cannot redeclare App\Services\KlingConfig::calcVideoCost() {"userId":2,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Cannot redeclare App\\Services\\KlingConfig::calcVideoCost() at E:/prject/OpenCodePrject/aiduanju/backend/app/Services/KlingConfig.php:139)
+[stacktrace]
+#0 {main}
+"} 
+[2026-07-14 15:10:06] local.ERROR: Cannot redeclare App\Services\KlingConfig::calcVideoCost() {"userId":2,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Cannot redeclare App\\Services\\KlingConfig::calcVideoCost() at E:/prject/OpenCodePrject/aiduanju/backend/app/Services/KlingConfig.php:139)
+[stacktrace]
+#0 {main}
+"} 

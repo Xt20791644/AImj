@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CreditController;
 use App\Http\Controllers\Api\WorkController;
 use App\Http\Controllers\Api\KlingController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Api\StudioController;
 
 // Public
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -42,4 +43,21 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/users/{id}/works', [AdminController::class, 'userWorks']);
     Route::post('/users/{id}/password', [AdminController::class, 'resetPassword']);
     Route::get('/transactions', [AdminController::class, 'transactions']);
+});
+
+// Studio — 角色/剧集/分镜
+Route::middleware('auth:sanctum')->prefix('studio')->group(function () {
+    Route::get('/works/{workId}/characters', [StudioController::class, 'characters']);
+    Route::post('/works/{workId}/characters', [StudioController::class, 'storeCharacter']);
+    Route::put('/works/{workId}/characters/{id}', [StudioController::class, 'updateCharacter']);
+    Route::delete('/works/{workId}/characters/{id}', [StudioController::class, 'deleteCharacter']);
+    Route::get('/works/{workId}/episodes', [StudioController::class, 'episodes']);
+    Route::post('/works/{workId}/episodes', [StudioController::class, 'storeEpisode']);
+    Route::put('/works/{workId}/episodes/{id}', [StudioController::class, 'updateEpisode']);
+    Route::get('/works/{workId}/episodes/{id}', [StudioController::class, 'showEpisode']);
+    Route::get('/episodes/{episodeId}/storyboards', [StudioController::class, 'storyboards']);
+    Route::post('/episodes/{episodeId}/storyboards', [StudioController::class, 'storeStoryboard']);
+    Route::put('/episodes/{episodeId}/storyboards/{id}', [StudioController::class, 'updateStoryboard']);
+    Route::delete('/episodes/{episodeId}/storyboards/{id}', [StudioController::class, 'deleteStoryboard']);
+    Route::post('/recommend-model', [StudioController::class, 'recommendModel']);
 });
