@@ -326,7 +326,7 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
       </div>
 
       <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field||w" class="warn-item">{{ typeof w === 'string' ? w : '⚠ ' + w.message }}</span></div>
-      <div class="block-action"><span class="count-hint mono">余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
+      <div class="block-action"><span class="count-hint mono">视频 {{ videoCost }} 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
     </div>
 
     <!-- Progress -->
