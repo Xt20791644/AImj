@@ -39,10 +39,12 @@ function logout() { localStorage.removeItem('token'); localStorage.removeItem('u
     <main class="main-area">
       <div v-if="activeTab==='works'&&isLoggedIn" class="works-section">
         <h2>我的作品</h2><div class="tech-line"></div>
-        <div style="display:flex;gap:8px;margin-bottom:16px">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <span class="filter-chip" :class="{on:workFilter==='all'}" @click="workFilter='all'">全部</span>
-          <span class="filter-chip" :class="{on:workFilter==='remake'}" @click="workFilter='remake'">爆款复刻</span>
           <span class="filter-chip" :class="{on:workFilter==='original'}" @click="workFilter='original'">原创</span>
+          <span class="filter-chip" :class="{on:workFilter==='remake'}" @click="workFilter='remake'">爆款复刻</span>
+          <span class="filter-chip" :class="{on:workFilter==='ad'}" @click="workFilter='ad'">剧情广告</span>
+          <span class="filter-chip" :class="{on:workFilter==='studio'}" @click="workFilter='studio'">短剧Studio</span>
         </div>
         <WorksList :filter="workFilter" />
       </div>
@@ -63,8 +65,11 @@ const WorksList = defineComponent({
     })
     return () => {
       const filtered = works.value.filter(w => {
-        if (props.filter==='remake') return (w.content||'').includes('爆款复刻')
-        if (props.filter==='original') return !(w.content||'').includes('爆款复刻')
+        const c = w.content || ''
+        if (props.filter==='remake') return c.includes('爆款复刻')
+        if (props.filter==='ad') return c.includes('剧情广告')
+        if (props.filter==='studio') return c.includes('短剧Studio')
+        if (props.filter==='original') return !c.includes('爆款复刻')&&!c.includes('剧情广告')&&!c.includes('短剧Studio')
         return true
       })
       if (loading.value) return h('div',{style:'textAlign:center;padding:40px;color:var(--text-tertiary)'},'加载中...')
