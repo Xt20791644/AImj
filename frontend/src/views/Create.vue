@@ -286,6 +286,19 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
           <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关" :disabled="!currentVideoModel?.sound || currentVideoModel?.soundLocked"/></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" :disabled="!currentVideoModel?.camera"><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
         </el-row>
+        <!-- 视频上传区 (Omni/O1) -->
+        <div v-if="showVideoRef" class="ref-area" style="margin-bottom:12px">
+          <p class="ref-label">📹 参考视频 (可选)</p>
+          <input type="file" accept="video/*" style="color:var(--text-tertiary);font-size:13px" @change="e=>{if(e.target.files[0]){/* TODO: handle video upload */;e.target.value=''}}"/>
+        </div>
+        <!-- 多图上传区 (Kling 1.6) -->
+        <div v-if="showMultiRef" class="ref-area" style="margin-bottom:12px">
+          <p class="ref-label">📎 多图参考 (可选，最多{{ multiRefMax }}张)</p>
+          <div class="ref-grid">
+            <div v-for="(preview,idx) in vidRefPreviews" :key="'mr'+idx" class="ref-thumb"><img :src="preview"/><span class="ref-del" @click="removeRef(idx, vidRefPreviews, vidRefData)">✕</span></div>
+            <label v-if="vidRefData.length < multiRefMax" class="ref-add">+<input type="file" accept="image/*" hidden @change="e=>{if(e.target.files[0]){handleVidRefUpload(e.target.files[0]);e.target.value=''}}"/></label>
+          </div>
+        </div>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
         <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
         <div class="block-action"><span class="count-hint mono">视频 {{ videoCost }} 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
@@ -341,6 +354,19 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small" :disabled="!currentVideoModel?.sound || currentVideoModel?.soundLocked"/></el-form-item></el-col>
           </el-row>
+          <!-- 视频上传区 (Omni/O1) -->
+          <div v-if="showVideoRef" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm);display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--text-tertiary)">📹 参考视频 (可选)</span>
+            <input type="file" accept="video/*" style="color:var(--text-tertiary);font-size:11px"/>
+          </div>
+          <!-- 多图上传区 (Kling 1.6) -->
+          <div v-if="showMultiRef" class="ref-area" style="margin-top:8px">
+            <p class="ref-label">📎 多图参考 (可选，最多{{ multiRefMax }}张)</p>
+            <div class="ref-grid">
+              <div v-for="(preview,idx) in vidRefPreviews" :key="'fm'+idx" class="ref-thumb"><img :src="preview"/><span class="ref-del" @click="removeRef(idx, vidRefPreviews, vidRefData)">✕</span></div>
+              <label v-if="vidRefData.length < multiRefMax" class="ref-add">+<input type="file" accept="image/*" hidden @change="e=>{if(e.target.files[0]){handleVidRefUpload(e.target.files[0]);e.target.value=''}}"/></label>
+            </div>
+          </div>
         </div>
       </div>
 
