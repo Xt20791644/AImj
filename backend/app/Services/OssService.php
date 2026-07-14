@@ -70,8 +70,8 @@ class OssService
         $host = str_starts_with($this->endpoint, $this->bucket) ? $this->endpoint : "{$this->getHost()}";
         $resource = "/{$this->bucket}/{$objectPath}";
 
-        // 签名
-        $stringToSign = "PUT\n\n{$contentType}\n{$date}\n{$resource}";
+        // 签名 (包含 x-oss-object-acl 头)
+        $stringToSign = "PUT\n\n{$contentType}\n{$date}\nx-oss-object-acl:public-read\n{$resource}";
         $signature = base64_encode(hash_hmac('sha1', $stringToSign, $this->accessKeySecret, true));
         $authorization = "OSS {$this->accessKeyId}:{$signature}";
 
