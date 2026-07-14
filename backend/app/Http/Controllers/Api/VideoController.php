@@ -42,10 +42,41 @@ class VideoController extends Controller
                 return response()->json(['message' => '不支持的视频平台，支持：抖音/快手/小红书/B站/微博'], 422);
             }
 
-            // 下载视频（跟随重定向，处理短链接）
+            // 下载（跟随重定向）
             $response = Http::withOptions(['allow_redirects' => ['max' => 5]])->timeout(120)->get($url);
             if (!$response->successful()) {
                 return response()->json(['message' => '无法获取视频，请检查链接'], 422);
+            }
+
+            $contentType = $response->header('Content-Type');
+            $content = $response->body();
+
+            // 如果下载到的是网页而不是视频，尝试从页面中提取视频源
+            if (str_contains($contentType, 'text/html') || str_contains($contentType, 'application/json')) {
+                // 尝试从HTML中提取视频URL
+                preg_match('/"url":"(https?:\\/\\/[^"]+\\.mp4[^"]*)"/i', $content, $v);
+                if (empty($v)) preg_match('/src="(https?:\\/\\/[^"]+\\.mp4[^"]*)"/i', $content, $v);
+                if (empty($v)) preg_match('/https?:\\/\\/[^"\'\\s]+\\.mp4[^"\'\\s]*/i', $content, $v);
+
+                if (!empty($v[1])) {
+                    $response = Http::withOptions(['allow_redirects' => ['max' => 5]])->timeout(120)->get($v[1]);
+                    if ($response->successful()) {
+                        $contentType = $response->header('Content-Type');
+                        $content = $response->body();
+                    }
+                }
+
+                // 仍然不是视频
+                if (!str_contains($contentType, 'video/') && !str_contains($contentType, 'application/octet-stream')) {
+                    return response()->json([
+                        'message' => '分享链接无法直接提取视频源。请通过"本地上传"方式上传已下载的视频文件'
+                    ], 422);
+                }
+            }
+
+            // 检查是否为视频
+            if (!str_contains($contentType, 'video/') && !str_contains($contentType, 'octet-stream')) {
+                return response()->json(['message' => '链接内容不是视频文件，请使用本地上传'], 422);
             }
 
             $content = $response->body();
