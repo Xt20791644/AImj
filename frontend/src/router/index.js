@@ -12,6 +12,17 @@ const routes = [
     ]
   },
   {
+    path: '/studio',
+    component: () => import('../layouts/StudioLayout.vue'),
+    meta: { auth: true },
+    children: [
+      { path: '', name: 'StudioDashboard', component: () => import('../views/studio/Dashboard.vue'), meta: { title: '项目管理' } },
+      { path: 'characters', name: 'StudioCharacters', component: () => import('../views/studio/Characters.vue'), meta: { title: '角色资产库' } },
+      { path: 'episodes', name: 'StudioEpisodes', component: () => import('../views/studio/Episodes.vue'), meta: { title: '剧集管理' } },
+      { path: 'episodes/:id', name: 'StudioEpisode', component: () => import('../views/studio/Episode.vue'), meta: { title: '分镜编辑' } },
+    ]
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('../views/auth/Login.vue'),
