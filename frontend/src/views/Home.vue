@@ -72,7 +72,7 @@ function cancelRemake() {
   if (remakeOssPath.value) { api.delete(`/video/reference?path=${encodeURIComponent(remakeOssPath.value)}`).catch(()=>{}) }
   remakeVideoUrl.value = ''; remakeOssPath.value = ''; showRemake.value = false
 }
-function confirmAd() { if(!adForm.name.trim()){ElMessage.warning('请填写产品名称');return}; story.value=`【剧情广告】产品：${adForm.name}，卖点：${adForm.points}，风格：${adForm.style||'随机'}`; showAd.value=false; ElMessage.success('已填入创作框') }
+async function submitCreate() { if(!story.value.trim()){ElMessage.warning('请输入故事内容');return}; try{await api.post('/works',{title:story.value.substring(0,30)||'AI创作',content:story.value,style:'realistic',mode:'fast',kling_config:{...config,ref_video:refVideo.value.url||'',ref_images:refImages.value}});ElMessage.success('创作任务已提交，正在生成...')}catch(e){ElMessage.error(e.response?.data?.message||'提交失败')} }
 
 async function aiRecommend() {
   if (!story.value.trim()) { ElMessage.warning('请先输入故事'); return }
@@ -124,7 +124,7 @@ async function aiRecommend() {
     <div class="scenario-bar"><span class="sc-label">应用场景：</span><span class="sc-chip" @click="$message.info('开发中')">🎬 短剧Studio</span><span class="sc-chip" :class="{on:showRemake}" @click="openScenario('remake')">🔥 爆款复刻</span><span class="sc-chip" :class="{on:showAd}" @click="openScenario('ad')">📢 剧情广告</span></div>
 
     <!-- Submit -->
-    <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" @click="$message.success('创作任务已提交')">🚀 开始创作</el-button></div>
+    <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" @click="submitCreate">🚀 开始创作</el-button></div>
 
     <!-- Remake Overlay -->
     <div v-if="showRemake" class="overlay" @click.self="cancelRemake"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3>

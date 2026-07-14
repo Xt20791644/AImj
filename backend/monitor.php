@@ -3,52 +3,56 @@ require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-echo "=== 监控模式已启动 ===\n";
-echo "等待用户提交新作品...\n\n";
+use App\Models\Work;
+use App\Services\KlingService;
+use App\Services\OssService;
+use App\Services\PromptOptimizerService;
 
-$processedIds = [];
-$kling = app(App\Services\KlingService::class);
-$tts = app(App\Services\CosyVoiceService::class);
-$oss = app(App\Services\OssService::class);
-$pipeline = app(App\Services\StoryPipelineService::class);
-$ffmpeg = app(App\Services\FFmpegService::class);
+// 确保 works 表存在
+try { \Illuminate\Support\Facades\Schema::create('works', function($t) {
+    $t->id(); $t->foreignId('user_id')->constrained('users'); $t->string('title'); $t->text('content');
+    $t->string('style')->default('realistic'); $t->string('status')->default('pending');
+    $t->integer('progress')->default(0); $t->text('status_text')->nullable();
+    $t->text('output_video')->nullable(); $t->text('output_cover')->nullable();
+    $t->integer('duration')->default(0); $t->json('meta')->nullable(); $t->timestamps();
+}); } catch(Exception $e) {}
 
-while (true) {
-    $work = App\Models\Work::where('status', 'pending')
-        ->whereNotIn('id', $processedIds)
-        ->latest()
-        ->first();
+$kling = app(KlingService::class); $oss = app(OssService::class); $optimizer = app(PromptOptimizerService::class);
 
-    if ($work) {
-        echo "══════════════════════════════════\n";
-        echo "📹 检测到新作品 ID: {$work->id} — 《{$work->title}》\n";
-        echo "开始处理...\n\n";
+echo "=== 监控模式 ===\n等待新作品...\n\n";
+$seen = [];
+while(true) {
+    $work = Work::whereNotIn('id', $seen ?: [0])->latest()->first();
+    if ($work && !in_array($work->id, $seen)) {
+        $seen[] = $work->id;
+        echo "══════════════════════════════════\n📹 ID:{$work->id} 《{$work->title}》\n";
+        $meta = $work->meta ?? []; $config = $meta['kling_config'] ?? [];
+        $prompt = $optimizer->optimize($work->content, ['title'=>$work->title,'style'=>$work->style]);
+        echo "优化提示词: ".mb_substr($prompt,0,120)."...\n";
 
         try {
-            $job = new App\Jobs\ProcessWorkJob($work->id);
-            $job->handle($kling, $tts, $oss, $pipeline, $ffmpeg);
-            
-            $work->refresh();
-            echo "\n✅ 处理完成！\n";
-            echo "视频 CDN 链接:\n";
-            echo $work->output_video . "\n\n";
+            echo "🎨 生图中...\n";
+            $r = $kling->generateImage($prompt, $config); $tid = $r['task_id']??'';
+            echo "  任务:{$tid}\n"; $imgUrl = null;
+            if($tid) for($i=0;$i<20;$i++){sleep(5);$s=$kling->getImageResult($tid);echo"  轮询{$i}:{$s['task_status']}\n";if($s['task_status']==='succeed'){$imgUrl=$s['task_result']['images'][0]['url']??null;break;}if($s['task_status']==='failed')break;}
+            if($imgUrl) echo "  ✅ 图片: ".mb_substr($imgUrl,0,80)."\n";
 
-            if ($work->output_video) {
-                echo "=== 生成成功！视频已保存 ===\n";
-            } else {
-                echo "⚠️ 视频链接为空，检查上方日志\n";
-            }
-        } catch (\Throwable $e) {
-            echo "❌ 失败: " . $e->getMessage() . "\n";
-            // 退款
-            $cost = config('services.credits.cost_per_generation', 50);
-            $work->user->rechargeCredits($cost, "退款");
-            echo "已退还 {$cost} 积分\n";
+            echo "🎥 生视频中...\n";
+            $vc = array_merge($config,['video_sound'=>'on','video_mode'=>'pro']);
+            $vr = $imgUrl ? $kling->imageToVideo($imgUrl, $optimizer->optimizeVideoPrompt($work->content,$config), $vc) : $kling->textToVideo($optimizer->optimizeVideoPrompt($work->content,$config), $vc);
+            $vtid = $vr['task_id']??''; echo "  任务:{$vtid}\n"; $videoUrl = null;
+            if($vtid) for($i=0;$i<60;$i++){sleep(5);$s=$kling->getVideoResult($vtid);echo"  轮询{$i}:{$s['task_status']}\n";if($s['task_status']==='succeed'){$videoUrl=$s['task_result']['videos'][0]['url']??null;break;}if($s['task_status']==='failed')break;}
+
+            $ossUrl = $videoUrl; $ossCover = $imgUrl;
+            if($oss->isConfigured() && $videoUrl){echo"☁️ OSS...\n";$ossUrl=$oss->uploadFromUrl($videoUrl,"works/{$work->id}/output.mp4")?:$videoUrl;}
+            if($oss->isConfigured() && $imgUrl){$ossCover=$oss->uploadFromUrl($imgUrl,"works/{$work->id}/cover.jpg")?:$imgUrl;}
+
+            $work->update(['status'=>'completed','progress'=>100,'output_video'=>$ossUrl,'output_cover'=>$ossCover,'status_text'=>'创作完成','duration'=>(int)($config['video_duration']??10)]);
+            echo "\n✅ 完成！\n视频: {$ossUrl}\n\n";
+        } catch(\Exception $e) {
+            echo "❌ ".$e->getMessage()."\n";
+            $work->update(['status'=>'failed','status_text'=>'生成失败']);
         }
-        
-        $processedIds[] = $work->id;
-        echo "\n等待下一个作品...\n\n";
     }
-
     sleep(2);
 }

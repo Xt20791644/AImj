@@ -2254,3 +2254,4 @@ x-oss-object-acl:public-read
 [2026-07-14 17:25:37] local.ERROR: OSS upload error: cURL error 56: Recv failure: Connection was reset (see https://curl.se/libcurl/c/libcurl-errors.html) for https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a56007e269b5.mp4  
 [2026-07-14 17:25:41] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a560094447cc.mp4  
 [2026-07-14 17:32:22] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a560225143d1.mp4  
+[2026-07-14 17:38:48] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a5603a695e7a.mp4  
