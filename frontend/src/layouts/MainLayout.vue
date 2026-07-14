@@ -47,6 +47,15 @@ function logout() { localStorage.removeItem('token'); localStorage.removeItem('u
           <span class="filter-chip" :class="{on:workFilter==='studio'}" @click="workFilter='studio'">短剧Studio</span>
         </div>
         <WorksList :filter="workFilter" />
+        <div v-if="creditTxs.length" style="margin-top:32px">
+          <h3 style="font-size:16px;color:var(--text-primary);margin-bottom:12px">积分变动记录</h3>
+          <div class="tech-line"></div>
+          <div v-for="tx in creditTxs.slice(0,20)" :key="tx.id" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-subtle);font-size:12px;gap:12px">
+            <span style="color:var(--text-tertiary);white-space:nowrap">{{ new Date(tx.created_at).toLocaleString('zh-CN') }}</span>
+            <span :style="{color:tx.amount>0?'var(--success)':'var(--danger)','font-weight':600}">{{ tx.amount>0?'+':'' }}{{ tx.amount }}</span>
+            <span style="color:var(--text-secondary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tx.description }}</span>
+          </div>
+        </div>
       </div>
       <router-view v-else />
     </main>
@@ -85,6 +94,8 @@ const WorksList = defineComponent({
   }
 })
 const workFilter = ref('all'); const viewing = ref(null); const showVideo = ref(false)
+const creditTxs = ref([])
+onMounted(async () => { try { const token = localStorage.getItem('token'); if (token) { const {data} = await api.get('/credits/transactions', {headers:{Authorization:'Bearer '+token}}); creditTxs.value = data.data||data } } catch(e) {} })
 </script>
 
 <style scoped>
