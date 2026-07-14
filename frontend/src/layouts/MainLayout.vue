@@ -31,7 +31,7 @@ onMounted(() => { if (isLoggedIn.value) { loadWorks(); loadCredits() } })
 watch(activeTab, (tab) => { if (tab === 'works') { worksKey.value++; loadWorks(); loadCredits() } })
 
 async function deleteWork(w) {
-  try { await api.delete(`/works/${w.id}`); works.value = works.value.filter(x => x.id !== w.id) } catch(e) {}
+  try { await api.delete(`/works/${w.id}`); works.value = works.value.filter(x => x.id !== w.id) } catch(e) { alert('删除失败，请重新登录后再试') }
 }
 function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }
 

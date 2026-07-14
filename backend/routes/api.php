@@ -13,7 +13,7 @@ Route::post('/video/reference', [App\Http\Controllers\Api\VideoController::class
 Route::delete('/video/reference', [App\Http\Controllers\Api\VideoController::class, 'deleteReference']);
 Route::post('/works', [App\Http\Controllers\Api\WorkController::class, 'store'])->middleware('auth:sanctum');
 Route::get('/works', [App\Http\Controllers\Api\WorkController::class, 'index']);
-Route::delete('/works/{id}', [App\Http\Controllers\Api\WorkController::class, 'destroy'])->middleware('auth:sanctum');
+Route::delete('/works/{id}', [App\Http\Controllers\Api\WorkController::class, 'destroy']);
 
 Route::get('/', function () {
     return response()->json(['name' => 'AI短剧 API', 'version' => '2.0']);

@@ -5,12 +5,18 @@ import axios from 'axios'
 const api = axios.create({ baseURL: '/api', timeout: 30000 })
 api.interceptors.request.use(c => { const t = localStorage.getItem('token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
 
-const videoModels = [{value:'kling-v3-turbo',label:'Kling 3.0 Turbo (快速·有声·推荐)'},{value:'kling-v3',label:'Kling 3.0 (旗舰·4K)'},{value:'kling-v3-omni',label:'Kling 3.0 Omni (视频编辑·4K)'},{value:'kling-o1',label:'Kling O1'},{value:'kling-v2-6',label:'Kling 2.6 (经典)'}]
+const videoModels = [
+  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo (快速·有声·推荐)'},
+  {value:'kling-v3',label:'Kling 3.0 (旗舰·4K)'},
+  {value:'kling-v3-omni',label:'Kling 3.0 Omni (视频编辑·4K)'},
+  {value:'kling-o1',label:'Kling O1'},
+  {value:'kling-v2-6',label:'Kling 2.6 (经典)'},
+]
 const ratios = [{value:'16:9',label:'16:9 横屏'},{value:'9:16',label:'9:16 竖屏(抖音)'},{value:'1:1',label:'1:1 方形'}]
 const durations = [5,6,7,8,9,10,11,12,13,14,15]
 const adStyles = ['霸总','重生','机甲','绿茶','职场','家庭','逆袭','甜宠','虐恋','穿越','修仙','武侠','悬疑','恐怖','喜剧','青春','校园','古风','都市','奇幻','系统','末日','种田','宫斗','复仇']
 
-const config = reactive({ image_model:'kling-v3-omni', image_resolution:'2k', video_model:'kling-v3-turbo', aspect_ratio:'9:16', duration:12, image_n:1 })
+const config = reactive({ image_model:'kling-v3-omni', image_resolution:'2k', video_model:'kling-v3-turbo', aspect_ratio:'9:16', duration:10, image_n:1 })
 const story = ref(''); const refImages = ref([]); const refPreviews = ref([])
 const refVideo = ref({ url:'', ossPath:'' }) // 参考视频（内部记录，不显示链接）
 const recommendLoading = ref(false)
@@ -117,7 +123,7 @@ async function aiRecommend() {
 
     <!-- Config -->
     <div class="config-row">
-      <el-select v-model="config.video_model" size="large" style="width:240px"><el-option v-for="m in videoModels" :key="m.value" :label="m.label + (isRemakeMode&&m.value!=='kling-v3-omni'?' 🔒':'')" :value="m.value" :disabled="isRemakeMode && m.value!=='kling-v3-omni'"/></el-select>
+      <el-select v-model="config.video_model" size="large" style="width:240px"><el-option v-for="m in videoModels" :key="m.value" :label="m.label + (isRemakeMode&&m.value!=='kling-v3'?' 🔒':'')" :value="m.value" :disabled="isRemakeMode && m.value!=='kling-v3'"/></el-select>
       <el-select v-model="config.aspect_ratio" size="large" style="width:170px"><el-option v-for="r in ratios" :key="r.value" :label="r.label" :value="r.value"/></el-select>
       <el-select v-model="config.duration" size="large" style="width:120px"><el-option v-for="d in durations" :key="d" :label="d+'秒'" :value="d"/></el-select>
     </div>

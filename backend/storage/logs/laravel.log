@@ -2260,3 +2260,50 @@ x-oss-object-acl:public-read
 [2026-07-14 18:45:01] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a56132c62178.mp4  
 [2026-07-14 18:46:54] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a56139cce31b.mp4  
 [2026-07-14 20:13:37] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a5627ea700f6.mp4  
+[2026-07-14 20:49:00] local.ERROR: SQLSTATE[HY000] [2002] 由于目标计算机积极拒绝，无法连接。 (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: aiduanju, SQL: select * from `works` where `id` not in (0) order by `created_at` desc limit 1) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 2002): SQLSTATE[HY000] [2002] 由于目标计算机积极拒绝，无法连接。 (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: aiduanju, SQL: select * from `works` where `id` not in (0) order by `created_at` desc limit 1) at E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857)
+[stacktrace]
+#0 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate/Database/Connection->runQueryCallback('select * from `...', Array, Object(Closure))
+#1 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(426): Illuminate/Database/Connection->run('select * from `...', Array, Object(Closure))
+#2 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3573): Illuminate/Database/Connection->select('select * from `...', Array, true, Array)
+#3 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3557): Illuminate/Database/Query/Builder->runSelect()
+#4 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(908): Illuminate/Database/Query/Builder->get(Array)
+#5 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(890): Illuminate/Database/Eloquent/Builder->getModels(Array)
+#6 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Concerns/BuildsQueries.php(366): Illuminate/Database/Eloquent/Builder->get(Array)
+#7 E:/prject/OpenCodePrject/aiduanju/backend/monitor.php(25): Illuminate/Database/Eloquent/Builder->first()
+#8 {main}
+
+[previous exception] [object] (PDOException(code: 2002): SQLSTATE[HY000] [2002] 由于目标计算机积极拒绝，无法连接。 at E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:66)
+[stacktrace]
+#0 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(66): PDO->__construct('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
+#1 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate/Database/Connectors/Connector->createPdoConnection('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
+#2 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate/Database/Connectors/Connector->createConnection('mysql:host=127....', Array, Array)
+#3 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(220): Illuminate/Database/Connectors/MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate/Database/Connectors/ConnectionFactory->Illuminate/Database/Connectors/{closure}()
+#5 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1297): call_user_func(Object(Closure))
+#6 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1335): Illuminate/Database/Connection->getPdo()
+#7 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(542): Illuminate/Database/Connection->getReadPdo()
+#8 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(435): Illuminate/Database/Connection->getPdoForSelect(true)
+#9 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(846): Illuminate/Database/Connection->Illuminate/Database/{closure}('select * from `...', Array)
+#10 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate/Database/Connection->runQueryCallback('select * from `...', Array, Object(Closure))
+#11 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(426): Illuminate/Database/Connection->run('select * from `...', Array, Object(Closure))
+#12 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3573): Illuminate/Database/Connection->select('select * from `...', Array, true, Array)
+#13 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3557): Illuminate/Database/Query/Builder->runSelect()
+#14 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(908): Illuminate/Database/Query/Builder->get(Array)
+#15 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(890): Illuminate/Database/Eloquent/Builder->getModels(Array)
+#16 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Database/Concerns/BuildsQueries.php(366): Illuminate/Database/Eloquent/Builder->get(Array)
+#17 E:/prject/OpenCodePrject/aiduanju/backend/monitor.php(25): Illuminate/Database/Eloquent/Builder->first()
+#18 {main}
+"} 
+[2026-07-14 21:03:33] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a5633a233308.mp4  
+[2026-07-14 21:03:47] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/3/output.mp4  
+[2026-07-14 21:03:49] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/3/cover.jpg  
+[2026-07-14 21:16:20] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/4/cover.jpg  
+[2026-07-14 21:17:15] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/3/cover.jpg  
+[2026-07-14 21:18:03] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/2/cover.jpg  
+[2026-07-14 21:18:52] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/1/cover.jpg  
+[2026-07-14 21:39:51] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/4/output.mp4  
+[2026-07-14 21:39:53] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/works/4/cover.jpg  
+[2026-07-14 21:45:48] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
+[2026-07-14 21:45:51] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
+[2026-07-14 21:45:53] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
+[2026-07-14 21:45:56] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
