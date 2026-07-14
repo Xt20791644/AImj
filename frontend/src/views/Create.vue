@@ -292,6 +292,13 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
               <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="small" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
               <el-col :span="4"><el-form-item label="数量"><el-input-number v-model="kling.image_n" :min="1" :max="9" size="small" style="width:100%"/></el-form-item></el-col>
             </el-row>
+            <div class="ref-area" style="margin-top:4px">
+              <p class="ref-label">📎 AI参考图 (可选，最多{{ maxRefImages }}张，用作生图参考)</p>
+              <div class="ref-grid">
+                <div v-for="(preview,idx) in imgRefPreviews" :key="'ai'+idx" class="ref-thumb"><img :src="preview"/><span class="ref-del" @click="removeRef(idx, imgRefPreviews, imgRefData)">✕</span></div>
+                <label v-if="imgRefData.length < maxRefImages" class="ref-add">+<input type="file" accept="image/*" hidden @change="e=>{if(e.target.files[0]){handleImgRefUpload(e.target.files[0]);e.target.value=''}}"/></label>
+              </div>
+            </div>
           </template>
           <template v-else>
             <div class="ref-area">
