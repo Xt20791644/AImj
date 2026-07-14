@@ -26,9 +26,18 @@ const imageModels = [
 ]
 
 const videoModels = [
-  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro'],pricing:{std:1,pro:2}},
-  {value:'kling-v3',label:'Kling 3.0',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro','4k'],pricing:{std:1,pro:2,'4k':6}},
-  {value:'kling-v3-omni',label:'Kling 3.0 Omni',sound:true,camera:false,cfg:false,t2v:false,modes:['std','pro','4k'],pricing:{std:1,pro:2,'4k':6},videoRequired:true},
+  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,soundLocked:true,resolutions:['std','pro']},
+  {value:'kling-v3',label:'Kling 3.0',sound:true,resolutions:['std','pro','4k']},
+  {value:'kling-v3-omni',label:'Kling 3.0 Omni',sound:true,resolutions:['std','pro','4k'],videoRef:true},
+  {value:'kling-o1',label:'Kling O1',sound:true,resolutions:['std','pro'],videoRef:true},
+  {value:'kling-v2-6',label:'Kling 2.6',sound:true,resolutions:['std','pro'],soundGate:['std']},
+  {value:'kling-v2-5-turbo',label:'Kling 2.5 Turbo',sound:false,resolutions:['std','pro']},
+  {value:'kling-v2-1',label:'Kling 2.1',sound:false,resolutions:['std','pro']},
+  {value:'kling-v2-1-master',label:'Kling 2.1 Master',sound:false,resolutions:['pro']},
+  {value:'kling-v2-master',label:'Kling 2.0 Master',sound:false,resolutions:['pro']},
+  {value:'kling-v1-6',label:'Kling 1.6',sound:false,resolutions:['std','pro'],multiRef:3},
+  {value:'kling-v1-5',label:'Kling 1.5',sound:false,resolutions:['std','pro']},
+  {value:'kling-v1',label:'Kling 1.0',sound:false,resolutions:['std','pro']},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [{value:'9:16',label:'9:16 竖屏(抖音·推荐)'},{value:'16:9',label:'16:9 横屏'},{value:'1:1',label:'1:1 方形'},{value:'4:3',label:'4:3 标准'},{value:'3:4',label:'3:4 竖屏'},{value:'3:2',label:'3:2 宽屏'},{value:'2:3',label:'2:3 竖长'},{value:'auto',label:'自动'}]
@@ -74,41 +83,47 @@ const videoRefCount = computed(() => {
   return count
 })
 
-// Available video models based on image availability
-const availableVideoModels = computed(() => {
-  const hasImages = videoRefCount.value > 0
-  return videoModels.map(m => ({
-    ...m,
-    disabled: m.videoRequired
-      ? false // Omni 视频模型不受图文过滤影响
-      : (hasImages && !m.t2v && m.value !== 'kling-video-o1')
-        ? false : (!hasImages && !m.t2v)
-  }))
-})
-
-// 视频积分: 单价/秒 × 时长
-const videoCost = computed(() => {
-  const m = videoModels.find(x => x.value === kling.video_model)
-  if (!m || !m.pricing) return 10
-  return (m.pricing[kling.video_mode] || 2) * parseInt(kling.video_duration)
-})
-
-const hasVideoRef = computed(() => videoRefCount.value > 0)
-const supportsRefImage = computed(() => {
-  const m = imageModels.find(x => x.value === kling.image_model)
-  return m && (m.pricing.i2i !== undefined || m.pricing.i2i_4k !== undefined)
-})
-const maxRefImages = computed(() => { const m = imageModels.find(x => x.value === kling.image_model); return m ? m.maxRef : 0 })
+// 视频积分: 720P=1, 1080P=2, 4K=5
+const VIDEO_RATES = {std:1,pro:2,'4k':5}
+const videoCost = computed(() => (VIDEO_RATES[kling.video_mode]||2) * parseInt(kling.video_duration))
 
 const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
 
+// 当前模型可用的画质（考虑声音门禁）
 const availableVideoModes = computed(() => {
   const m = currentVideoModel.value
-  return m && m.modes ? videoModes.filter(v => m.modes.includes(v.value)) : videoModes
+  if (!m) return videoModes
+  let modes = videoModes.filter(v => m.resolutions.includes(v.value))
+  if (m.soundGate && kling.video_sound === 'on') {
+    modes = modes.filter(v => !m.soundGate.includes(v.value))
+  }
+  return modes
 })
 
-watch(() => kling.video_model, (val) => { const m = videoModels.find(x => x.value === val); if (m) kling.video_sound = m.sound ? 'on' : 'off' })
-watch(() => kling.video_sound, (val) => { if (val === 'on' && kling.video_mode === 'std') kling.video_mode = 'pro' })
+// 模型是否显示上传视频区
+const showVideoRef = computed(() => currentVideoModel.value?.videoRef || false)
+
+// 模型是否显示多图上传区
+const showMultiRef = computed(() => (currentVideoModel.value?.multiRef || 0) > 0)
+const multiRefMax = computed(() => currentVideoModel.value?.multiRef || 0)
+
+watch(() => kling.video_model, (val) => {
+  const m = videoModels.find(x => x.value === val)
+  if (m) {
+    kling.video_sound = m.sound ? 'on' : 'off'
+    // 如果当前画质不在新模型支持范围内，自动切换
+    if (!m.resolutions.includes(kling.video_mode)) {
+      kling.video_mode = m.resolutions.includes('pro') ? 'pro' : m.resolutions[0]
+    }
+    // 声音门禁：2.6有声时只能1080P
+    if (m.soundGate && kling.video_sound === 'on' && m.soundGate.includes(kling.video_mode)) {
+      kling.video_mode = 'pro'
+    }
+  }
+})
+watch(() => kling.video_sound, (val) => {
+  if (val === 'on' && kling.video_mode === 'std') kling.video_mode = 'pro'
+})
 
 // AI recommend
 async function aiRecommend() {
@@ -262,13 +277,13 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
         </div>
 
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%"><el-option v-for="m in availableVideoModels" :key="m.value" :label="m.label" :value="m.value" :disabled="m.disabled"><span style="display:flex;align-items:center;gap:8px">{{ m.label }}{{ m.disabled?' 🔒':'' }}<span v-if="m.sound" style="color:var(--accent);font-size:12px">🔊</span><span v-else style="color:var(--text-tertiary);font-size:12px">🔇</span></span></el-option></el-select></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%"><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"><span style="display:flex;align-items:center;gap:8px">{{ m.label }}{{ m.disabled?' 🔒':'' }}<span v-if="m.sound" style="color:var(--accent);font-size:12px">🔊</span><span v-else style="color:var(--text-tertiary);font-size:12px">🔇</span></span></el-option></el-select></el-form-item></el-col>
           <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%"><el-option v-for="m in availableVideoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
           <el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" @change="validateConfig"><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
           <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-row :gutter="16">
-          <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
+          <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关" :disabled="!currentVideoModel?.sound || currentVideoModel?.soundLocked"/></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" :disabled="!currentVideoModel?.camera"><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
         </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
@@ -320,11 +335,11 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
         <!-- Video config -->
         <div class="config-group"><h4>🎥 视频配置</h4>
           <el-row :gutter="12">
-            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig"><el-option v-for="m in availableVideoModels" :key="m.value" :label="m.label" :value="m.value" :disabled="m.disabled"/></el-select></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig"><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%"><el-option v-for="m in availableVideoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig"><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
-            <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
+            <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small" :disabled="!currentVideoModel?.sound || currentVideoModel?.soundLocked"/></el-form-item></el-col>
           </el-row>
         </div>
       </div>

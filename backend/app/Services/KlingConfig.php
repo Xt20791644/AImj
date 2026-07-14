@@ -76,37 +76,29 @@ class KlingConfig
     ];
 
     // ============================================
-    // 视频模型 (保持不变)
+    // 视频模型 — 积分统一: 720P=1/s, 1080P=2/s, 4K=5/s
     // ============================================
+    const VIDEO_PRICING = ['std' => 1, 'pro' => 2, '4k' => 5];
+
     const VIDEO_MODELS = [
-        'kling-v3-turbo' => [
-            'name' => 'Kling 3.0 Turbo',
-            'modes' => ['std', 'pro'],
-            'durations' => ['5','6','7','8','9','10','11','12','13','14','15'],
-            'supports' => ['image2video', 'text2video', 'sound'],
-            'pricing' => ['std' => 1, 'pro' => 2],
-            'default_duration' => '10',
-        ],
-        'kling-v3' => [
-            'name' => 'Kling 3.0',
-            'modes' => ['std', 'pro', '4k'],
-            'durations' => ['5','6','7','8','9','10','11','12','13','14','15'],
-            'supports' => ['image2video', 'text2video', 'sound'],
-            'pricing' => ['std' => 1, 'pro' => 2, '4k' => 6],
-            'default_duration' => '10',
-        ],
-        'kling-v3-omni' => [
-            'name' => 'Kling 3.0 Omni',
-            'modes' => ['std', 'pro', '4k'],
-            'durations' => ['5','6','7','8','9','10','11','12','13','14','15'],
-            'supports' => ['omni_video', 'sound'],
-            'video_required' => true,
-            'pricing' => ['std' => 1, 'pro' => 2, '4k' => 6],
-            'default_duration' => '10',
-        ],
+        'kling-v3-turbo' => ['name' => 'Kling 3.0 Turbo', 'sound' => true, 'sound_required' => true, 'resolutions' => ['std', 'pro']],
+        'kling-v3' => ['name' => 'Kling 3.0', 'sound' => true, 'resolutions' => ['std', 'pro', '4k']],
+        'kling-v3-omni' => ['name' => 'Kling 3.0 Omni', 'sound' => true, 'resolutions' => ['std', 'pro', '4k'], 'video_ref' => true],
+        'kling-o1' => ['name' => 'Kling O1', 'sound' => true, 'resolutions' => ['std', 'pro'], 'video_ref' => true],
+        'kling-v2-6' => ['name' => 'Kling 2.6', 'sound' => true, 'resolutions' => ['std', 'pro'], 'sound_mode_gate' => ['std']],
+        'kling-v2-5-turbo' => ['name' => 'Kling 2.5 Turbo', 'sound' => false, 'resolutions' => ['std', 'pro']],
+        'kling-v2-1' => ['name' => 'Kling 2.1', 'sound' => false, 'resolutions' => ['std', 'pro']],
+        'kling-v2-1-master' => ['name' => 'Kling 2.1 Master', 'sound' => false, 'resolutions' => ['pro']],
+        'kling-v2-master' => ['name' => 'Kling 2.0 Master', 'sound' => false, 'resolutions' => ['pro']],
+        'kling-v1-6' => ['name' => 'Kling 1.6', 'sound' => false, 'resolutions' => ['std', 'pro'], 'multi_ref' => 3],
+        'kling-v1-5' => ['name' => 'Kling 1.5', 'sound' => false, 'resolutions' => ['std', 'pro']],
+        'kling-v1' => ['name' => 'Kling 1.0', 'sound' => false, 'resolutions' => ['std', 'pro']],
     ];
 
-    const IMAGE_RESOLUTIONS = ['1k' => '1K 标清', '2k' => '2K 高清', '4k' => '4K 超清'];
+    public static function calcVideoCost(string $mode, int $duration): int
+    {
+        return (self::VIDEO_PRICING[$mode] ?? 2) * $duration;
+    }
     const IMAGE_ASPECT_RATIOS = ['16:9' => '16:9 横屏', '9:16' => '9:16 竖屏(抖音)', '1:1' => '1:1 方形', '4:3' => '4:3 标准', '3:4' => '3:4 竖屏', '3:2' => '3:2 宽屏', '2:3' => '2:3 竖长', '2:1' => '2:1 超宽', '1:2' => '1:2 超长', '1:9' => '1:9 长条', 'auto' => '自动'];
     const VIDEO_MODES = ['std' => '标准 720P', 'pro' => '专业 1080P', '4k' => '4K 超清'];
     const VIDEO_DURATIONS = ['3' => '3秒', '4' => '4秒', '5' => '5秒', '6' => '6秒', '7' => '7秒', '8' => '8秒', '9' => '9秒', '10' => '10秒', '11' => '11秒', '12' => '12秒', '13' => '13秒', '14' => '14秒', '15' => '15秒'];
