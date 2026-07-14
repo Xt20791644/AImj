@@ -1,11 +1,19 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 const api = axios.create({ baseURL: '/api' })
 const activeTab = ref('create')
 const user = ref(JSON.parse(localStorage.getItem('user')||'null'))
 const token = computed(() => localStorage.getItem('token'))
 const isLoggedIn = computed(() => !!token.value)
+const creditTxs = ref([])
+onMounted(async () => {
+  if (!localStorage.getItem('token')) return
+  try {
+    const { data } = await api.get('/credits/transactions', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+    creditTxs.value = data.data || data
+  } catch(e) {}
+})
 
 const tabs = computed(() => [
   { key:'create', label:'快速创作', icon:'⚡' },
@@ -94,8 +102,6 @@ const WorksList = defineComponent({
   }
 })
 const workFilter = ref('all'); const viewing = ref(null); const showVideo = ref(false)
-const creditTxs = ref([])
-onMounted(async () => { try { const token = localStorage.getItem('token'); if (token) { const {data} = await api.get('/credits/transactions', {headers:{Authorization:'Bearer '+token}}); creditTxs.value = data.data||data } } catch(e) {} })
 </script>
 
 <style scoped>
