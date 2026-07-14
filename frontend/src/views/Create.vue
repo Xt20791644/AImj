@@ -15,10 +15,14 @@ const script = ref(''); const scriptEditing = ref(false); const scriptGenerated 
 
 // 内嵌选项数据（不依赖后端API）
 const imageModels = [
-  {value:'kling-v3',label:'Kling V3 (旗舰·推荐)'},{value:'kling-v3-omni',label:'Kling V3 Omni (全能)'},
-  {value:'kling-v2-1',label:'Kling V2.1 (稳定)'},{value:'kling-v2-new',label:'Kling V2 New'},
-  {value:'kling-v2',label:'Kling V2'},{value:'kling-v1-5',label:'Kling V1.5 (人脸参考)'},
-  {value:'kling-v1',label:'Kling V1 (基础)'},{value:'kling-image-o1',label:'Kling Image O1 (专业4K)'},
+  {value:'kling-v3',label:'Kling Image 3.0',desc:'文生图/图生图',pricing:{t2i:8,i2i:8},resolutions:['1k','2k'],maxRef:1},
+  {value:'kling-v3-omni',label:'Kling Image 3.0 Omni',desc:'文生图/图生图',pricing:{t2i:8,i2i:8,t2i_4k:16,i2i_4k:16},resolutions:['1k','2k','4k'],maxRef:1},
+  {value:'kling-image-o1',label:'Kling Image O1',desc:'文生图/图生图',pricing:{t2i:8,i2i:8},resolutions:['1k','2k'],maxRef:1},
+  {value:'kling-v2-1',label:'Kling Image 2.1',desc:'文生图/图生图/多图参考',pricing:{t2i:4,i2i:8,multi:16},resolutions:['1k','2k'],maxRef:3},
+  {value:'kling-v2-new',label:'Kling Image 2.1 New',desc:'图生图',pricing:{i2i:8},resolutions:['1k'],maxRef:1},
+  {value:'kling-v2',label:'Kling Image 2.0',desc:'文生图/图生图/多图参考',pricing:{t2i:4,i2i:8,multi:16},resolutions:['1k','2k'],maxRef:3},
+  {value:'kling-v1-5',label:'Kling Image 1.5',desc:'文生图/图生图',pricing:{t2i:4,i2i:8},resolutions:['1k'],maxRef:1},
+  {value:'kling-v1',label:'Kling Image 1.0',desc:'文生图/图生图',pricing:{t2i:2,i2i:2},resolutions:['1k'],maxRef:1},
 ]
 const videoModels = [
   {value:'kling-v3',label:'Kling V3 (旗舰)',sound:true,camera:true,cfg:true,t2v:true},
@@ -54,10 +58,45 @@ const kling = reactive({
   video_model:'kling-v2-6', video_mode:'pro', video_duration:'5', video_aspect_ratio:'9:16', video_sound:'on',
   video_negative_prompt:'', camera_type:'',
 })
-const generatedImages = ref([])
+const generatedImages = ref([]); const refImages = ref([]); const refImagePreviews = ref([])
 const analysis = ref(null)
 const warnings = ref([])
 const loading = ref(false); const recommendLoading = ref(false)
+
+// 图片积分计算
+const imageCost = computed(() => {
+  const m = imageModels.find(x => x.value === kling.image_model)
+  if (!m) return kling.image_n * 8
+  const p = m.pricing
+  const n = Math.max(1, Math.min(9, kling.image_n))
+  let unit = p.t2i || 8
+  if (refImages.value.length >= 2 && p.multi) unit = p.multi
+  else if (refImages.value.length >= 1 && p.i2i) unit = p.i2i
+  if (kling.image_resolution === '4k') unit = (refImages.value.length >= 1 ? p.i2i_4k : p.t2i_4k) || unit * 2
+  return unit * n
+})
+
+// 当前模型支持的分辨率
+const availableResolutions = computed(() => {
+  const m = imageModels.find(x => x.value === kling.image_model)
+  if (!m) return resolutions
+  return resolutions.filter(r => m.resolutions.includes(r.value))
+})
+
+// 当前模型是否支持上传图片
+const supportsRefImage = computed(() => {
+  const m = imageModels.find(x => x.value === kling.image_model)
+  return m && (m.pricing.i2i !== undefined || m.pricing.i2i_4k !== undefined)
+})
+
+// 当前模型最大参考图数
+const maxRefImages = computed(() => {
+  const m = imageModels.find(x => x.value === kling.image_model)
+  return m ? m.maxRef : 0
+})
+
+// 配置变化时自动计算积分
+watch([() => kling.image_model, () => kling.image_resolution, () => kling.image_n, refImages], () => {})
 
 // 当前视频模型是否支持声音
 const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
@@ -114,6 +153,30 @@ async function fastCreate(){if(!story.title.trim()||!story.content.trim()){ElMes
 function startPolling(){pollTimer=setInterval(async()=>{try{const r=await api.get(`/works/${workId.value}`);if(r.status==='completed'){stopPolling();ElMessage.success('创作完成！');setTimeout(()=>router.push('/works'),1500)}else if(r.status==='failed'){stopPolling();loading.value=false;ElMessage.error('失败：'+(r.status_text||'未知'))}}catch(e){}},3000)}
 function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
 onUnmounted(()=>stopPolling())
+
+// 参考图上传处理
+function handleRefUpload(file) {
+  const reader = new FileReader()
+  reader.onload = e => {
+    refImagePreviews.value.push(e.target.result)
+    refImages.value.push(e.target.result)
+  }
+  reader.readAsDataURL(file)
+  return false
+}
+function removeRefImage(idx) {
+  refImagePreviews.value.splice(idx, 1)
+  refImages.value.splice(idx, 1)
+}
+function beforeRefUpload(file) {
+  if (refImages.value.length >= maxRefImages.value) {
+    ElMessage.warning(`最多上传 ${maxRefImages.value} 张参考图`)
+    return false
+  }
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) { ElMessage.warning('请上传图片文件'); return false }
+  return true
+}
 </script>
 
 <template>
@@ -164,12 +227,22 @@ onUnmounted(()=>stopPolling())
         <div v-if="!generatedImages.length">
           <el-row :gutter="16">
             <el-col :span="8"><el-form-item label="生成模型"><el-select v-model="kling.image_model" size="large" style="width:100%" @change="validateConfig" ><el-option v-for="m in imageModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" ><el-option v-for="r in resolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="输出分辨率"><el-select v-model="kling.image_resolution" size="large" style="width:100%" ><el-option v-for="r in availableResolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="large" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
-            <el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="1" :max="5" size="large" style="width:100%"/></el-form-item></el-col>
+            <el-col :span="6"><el-form-item label="生成数量"><el-input-number v-model="kling.image_n" :min="1" :max="9" size="large" style="width:100%"/></el-form-item></el-col>
           </el-row>
+          <div v-if="supportsRefImage" style="margin-bottom:12px;padding:12px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm)">
+            <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">📎 参考图片 (可选，最多{{ maxRefImages }}张)</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div v-for="(preview,idx) in refImagePreviews" :key="idx" style="position:relative;width:80px;height:80px;border-radius:4px;overflow:hidden;border:1px solid var(--border-strong)">
+                <img :src="preview" style="width:100%;height:100%;object-fit:cover"/>
+                <span @click="removeRefImage(idx)" style="position:absolute;top:2px;right:2px;cursor:pointer;background:rgba(0,0,0,0.7);color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">✕</span>
+              </div>
+              <label v-if="refImages.length < maxRefImages" style="width:80px;height:80px;border:1px dashed var(--border-strong);border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-tertiary);font-size:24px">+<input type="file" accept="image/*" style="display:none" @change="e=>{if(e.target.files[0]){beforeRefUpload(e.target.files[0])&&handleRefUpload(e.target.files[0]);e.target.value=''}}"/></label>
+            </div>
+          </div>
           <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
-          <div class="block-action"><el-button type="primary" size="large" @click="generateImages" :loading="loading"><span class="btn-icon">▣</span> 开始生成图片</el-button></div>
+          <div class="block-action"><span class="cost-hint mono">预计 {{ imageCost }} 积分</span><el-button type="primary" size="large" @click="generateImages" :loading="loading"><span class="btn-icon">▣</span> 开始生成图片</el-button></div>
         </div>
         <div v-else>
           <p class="block-hint">点击选择满意的图片</p>
@@ -193,7 +266,7 @@ onUnmounted(()=>stopPolling())
         </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
         <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
-        <div class="block-action"><span class="count-hint mono">50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
+        <div class="block-action"><span class="count-hint mono">预计 {{ imageCost }} 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
       </div>
     </template>
 
@@ -216,9 +289,14 @@ onUnmounted(()=>stopPolling())
         <div class="config-group"><h4>🖼️ 图片配置</h4>
           <el-row :gutter="12">
             <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.image_model" size="small" style="width:100%" ><el-option v-for="m in imageModels" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
-            <el-col :span="5"><el-form-item label="分辨率"><el-select v-model="kling.image_resolution" size="small" style="width:100%" ><el-option v-for="r in resolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
+            <el-col :span="5"><el-form-item label="分辨率"><el-select v-model="kling.image_resolution" size="small" style="width:100%" ><el-option v-for="r in availableResolutions" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.image_aspect_ratio" size="small" style="width:100%" ><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
           </el-row>
+          <div v-if="supportsRefImage" style="margin:8px 0;padding:8px 10px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--text-tertiary)">📎 参考图:</span>
+            <div v-for="(preview,idx) in refImagePreviews" :key="idx" style="position:relative;width:36px;height:36px;border-radius:3px;overflow:hidden;border:1px solid var(--border-strong)"><img :src="preview" style="width:100%;height:100%;object-fit:cover"/><span @click="removeRefImage(idx)" style="position:absolute;top:-1px;right:-1px;cursor:pointer;background:rgba(0,0,0,0.8);color:#fff;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px">✕</span></div>
+            <label v-if="refImages.length < maxRefImages" style="width:36px;height:36px;border:1px dashed var(--border-strong);border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-tertiary);font-size:18px">+<input type="file" accept="image/*" style="display:none" @change="e=>{if(e.target.files[0]){beforeRefUpload(e.target.files[0])&&handleRefUpload(e.target.files[0]);e.target.value=''}}"/></label>
+          </div>
         </div>
         <div class="config-group"><h4>🎥 视频配置</h4>
           <el-row :gutter="12">
@@ -234,7 +312,7 @@ onUnmounted(()=>stopPolling())
       <!-- Warnings -->
       <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field||w" class="warn-item">{{ typeof w === 'string' ? w : '⚠ ' + w.message }}</span></div>
 
-      <div class="block-action"><span class="count-hint mono">50 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
+      <div class="block-action"><span class="count-hint mono">预计 {{ imageCost }} 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="fastCreate" :loading="loading" :disabled="!story.title||!story.content"><span class="btn-icon">⚡</span> 一键生成短剧</el-button></div>
     </div>
 
     <!-- Fullscreen Progress Overlay -->
