@@ -2060,3 +2060,5 @@ Did you mean one of these?
 #57 E:/prject/OpenCodePrject/aiduanju/backend/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('E://prject//OpenC...')
 #58 {main}
 "} 
+[2026-07-14 16:33:54] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a55f47221823.mp4  
+[2026-07-14 16:33:56] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a55f4739fb77.mp4  

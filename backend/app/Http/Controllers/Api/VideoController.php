@@ -42,8 +42,8 @@ class VideoController extends Controller
                 return response()->json(['message' => '不支持的视频平台，支持：抖音/快手/小红书/B站/微博'], 422);
             }
 
-            // 下载视频
-            $response = Http::timeout(120)->get($url);
+            // 下载视频（跟随重定向，处理短链接）
+            $response = Http::withOptions(['allow_redirects' => ['max' => 5]])->timeout(120)->get($url);
             if (!$response->successful()) {
                 return response()->json(['message' => '无法获取视频，请检查链接'], 422);
             }

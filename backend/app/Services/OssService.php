@@ -79,6 +79,7 @@ class OssService
             'Date' => $date,
             'Content-Type' => $contentType,
             'Authorization' => $authorization,
+            'x-oss-object-acl' => 'public-read',
         ])->withBody($content, $contentType)
           ->put("https://{$host}/{$objectPath}");
 
