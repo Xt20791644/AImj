@@ -26,8 +26,8 @@ const imageModels = [
 ]
 
 const videoModels = [
-  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro'],pricing:{std:1,pro:2},motion:false},
-  {value:'kling-v3',label:'Kling 3.0',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro','4k'],pricing:{std:1,pro:2,'4k':6},motion:true,motionPricing:{std:1,pro:2},motionRequiresImage:true},
+  {value:'kling-v3-turbo',label:'Kling 3.0 Turbo',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro'],pricing:{std:1,pro:2}},
+  {value:'kling-v3',label:'Kling 3.0',sound:true,camera:false,cfg:false,t2v:true,modes:['std','pro','4k'],pricing:{std:1,pro:2,'4k':6}},
 ]
 const resolutions = [{value:'1k',label:'1K 标清'},{value:'2k',label:'2K 高清'},{value:'4k',label:'4K 超清'}]
 const aspectRatios = [{value:'9:16',label:'9:16 竖屏(抖音·推荐)'},{value:'16:9',label:'16:9 横屏'},{value:'1:1',label:'1:1 方形'},{value:'4:3',label:'4:3 标准'},{value:'3:4',label:'3:4 竖屏'},{value:'3:2',label:'3:2 宽屏'},{value:'2:3',label:'2:3 竖长'},{value:'auto',label:'自动'}]
@@ -38,7 +38,7 @@ const cameraTypes = [{value:'simple',label:'自定义运镜'},{value:'down_back'
 const kling = reactive({
   image_model:'kling-v3', image_resolution:'2k', image_aspect_ratio:'9:16', image_n:1,
   video_model:'kling-v3-turbo', video_mode:'pro', video_duration:'10', video_aspect_ratio:'9:16', video_sound:'on',
-  video_negative_prompt:'', camera_type:'', motion_control:false,
+  video_negative_prompt:'', camera_type:'',
 })
 
 const generatedImages = ref([]); const skipImages = ref(false)
@@ -87,17 +87,7 @@ const availableVideoModels = computed(() => {
 const videoCost = computed(() => {
   const m = videoModels.find(x => x.value === kling.video_model)
   if (!m || !m.pricing) return 10
-  const dur = parseInt(kling.video_duration)
-  if (kling.motion_control && m.motion && m.motionPricing) {
-    return (m.motionPricing[kling.video_mode] || m.pricing[kling.video_mode] || 2) * dur
-  }
-  return (m.pricing[kling.video_mode] || 2) * dur
-})
-
-// 动作控制是否可用
-const motionAvailable = computed(() => {
-  const m = currentVideoModel.value
-  return m && m.motion && kling.video_mode !== '4k'
+  return (m.pricing[kling.video_mode] || 2) * parseInt(kling.video_duration)
 })
 
 const hasVideoRef = computed(() => videoRefCount.value > 0)
@@ -278,9 +268,6 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
           <el-col :span="8"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" active-text="开" inactive-text="关" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
           <el-col :span="8"><el-form-item label="运镜"><el-select v-model="kling.camera_type" size="large" style="width:100%" clearable placeholder="无运镜" :disabled="!currentVideoModel?.camera"><el-option v-for="c in cameraTypes" :key="c.value" :label="c.label" :value="c.value"/></el-select></el-form-item></el-col>
         </el-row>
-        <el-row :gutter="16" v-if="motionAvailable">
-          <el-col :span="8"><el-form-item label="动作控制"><el-switch v-model="kling.motion_control" active-text="开" inactive-text="关" /></el-form-item></el-col>
-        </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
         <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
         <div class="block-action"><span class="count-hint mono">视频 {{ videoCost }} 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
@@ -335,9 +322,6 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
             <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig"><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
-          </el-row>
-          <el-row :gutter="12" v-if="motionAvailable">
-            <el-col :span="6"><el-form-item label="动作控制"><el-switch v-model="kling.motion_control" active-text="开" inactive-text="关" size="small" /></el-form-item></el-col>
           </el-row>
         </div>
       </div>

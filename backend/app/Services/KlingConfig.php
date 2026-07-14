@@ -91,11 +91,8 @@ class KlingConfig
             'name' => 'Kling 3.0',
             'modes' => ['std', 'pro', '4k'],
             'durations' => ['5','6','7','8','9','10','11','12','13','14','15'],
-            'supports' => ['image2video', 'text2video', 'sound', 'motion_control'],
+            'supports' => ['image2video', 'text2video', 'sound'],
             'pricing' => ['std' => 1, 'pro' => 2, '4k' => 6],
-            'motion_pricing' => ['std' => 1, 'pro' => 2],
-            'motion_requires_image' => true,
-            'motion_no_4k' => true,
             'default_duration' => '10',
         ],
     ];
