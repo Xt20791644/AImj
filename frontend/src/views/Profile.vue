@@ -31,6 +31,11 @@ async function playWork(work) {
   try { const r = await api.get(`/works/${work.id}`); viewing.value = r; showDetail.value = true } catch (e) {}
 }
 
+async function showTransactionWork(row) {
+  if (row.type !== 'consume' || !row.reference_id) return
+  try { const r = await api.get(`/works/${row.reference_id}`); viewing.value = r; showDetail.value = true } catch(e) {}
+}
+
 function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
 function styleLabel(s) { const m={realistic:'真人写实',anime:'日系动画','3d':'3D动画',cyberpunk:'赛博朋克'}; return m[s]||s }
 </script>
@@ -71,6 +76,19 @@ function styleLabel(s) { const m={realistic:'真人写实',anime:'日系动画',
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- 积分变动记录 -->
+        <div class="glass-panel section-card" style="margin-top:16px">
+          <div class="sc-head">📊 积分变动记录</div>
+          <el-table :data="creditStore.transactions" v-loading="creditStore.loading" empty-text="暂无记录" style="margin-top:12px">
+            <el-table-column prop="created_at" label="时间" width="170"><template #default="{row}">{{ formatDate(row.created_at) }}</template></el-table-column>
+            <el-table-column prop="type" label="类型" width="90"><template #default="{row}"><el-tag :type="row.amount>0?'success':'danger'" size="small">{{ row.amount>0?'充值':'消费' }}</el-tag></template></el-table-column>
+            <el-table-column prop="amount" label="积分变动" width="100"><template #default="{row}"><span :style="{color:row.amount>0?'var(--success)':'var(--danger)'}">{{ row.amount>0?'+':'' }}{{ row.amount }}</span></template></el-table-column>
+            <el-table-column prop="balance_after" label="余额" width="100" />
+            <el-table-column prop="description" label="说明" />
+            <el-table-column label="操作" width="80"><template #default="{row}"><el-button v-if="row.type==='consume'&&row.reference_id" size="small" text type="primary" @click="showTransactionWork(row)">查看</el-button></template></el-table-column>
+          </el-table>
         </div>
       </el-col>
     </el-row>
