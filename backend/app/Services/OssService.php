@@ -91,8 +91,8 @@ class OssService
             return $url;
         }
 
-        Log::error("OSS PUT failed: " . $response->status());
-        return "https://{$host}/{$objectPath}"; // 返回 URL 即使验证失败
+        Log::error("OSS PUT failed", ['status' => $response->status(), 'body' => $response->body()]);
+        throw new \Exception("OSS上传失败 [{$response->status()}]: " . substr($response->body(), 0, 200));
     }
 
     /**
