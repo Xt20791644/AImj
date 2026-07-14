@@ -19,9 +19,15 @@ class VideoController extends Controller
 
         // 方式1: URL下载
         if ($url) {
+            // 从粘贴文本中提取URL（处理用户复制整个分享文案的情况）
+            preg_match('/https?:\/\/[^\s]+/', $url, $matches);
+            if (!empty($matches[0])) {
+                $url = rtrim($matches[0], '.,;:!?）)】」');
+            }
+
             // 验证URL
             if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                return response()->json(['message' => '视频链接格式不正确'], 422);
+                return response()->json(['message' => '未识别到有效视频链接，请检查后重试'], 422);
             }
 
             // 检查是否为支持的平台
