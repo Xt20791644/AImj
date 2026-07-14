@@ -98,6 +98,11 @@ const maxRefImages = computed(() => { const m = imageModels.find(x => x.value ==
 
 const currentVideoModel = computed(() => videoModels.find(m => m.value === kling.video_model))
 
+const availableVideoModes = computed(() => {
+  const m = currentVideoModel.value
+  return m && m.modes ? videoModes.filter(v => m.modes.includes(v.value)) : videoModes
+})
+
 watch(() => kling.video_model, (val) => { const m = videoModels.find(x => x.value === val); if (m) kling.video_sound = m.sound ? 'on' : 'off' })
 watch(() => kling.video_sound, (val) => { if (val === 'on' && kling.video_mode === 'std') kling.video_mode = 'pro' })
 
@@ -254,7 +259,7 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
 
         <el-row :gutter="16">
           <el-col :span="8"><el-form-item label="视频模型"><el-select v-model="kling.video_model" size="large" style="width:100%"><el-option v-for="m in availableVideoModels" :key="m.value" :label="m.label" :value="m.value" :disabled="m.disabled"><span style="display:flex;align-items:center;gap:8px">{{ m.label }}{{ m.disabled?' 🔒':'' }}<span v-if="m.sound" style="color:var(--accent);font-size:12px">🔊</span><span v-else style="color:var(--text-tertiary);font-size:12px">🔇</span></span></el-option></el-select></el-form-item></el-col>
-          <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%"><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+          <el-col :span="5"><el-form-item label="画质模式"><el-select v-model="kling.video_mode" size="large" style="width:100%"><el-option v-for="m in availableVideoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
           <el-col :span="5"><el-form-item label="视频时长"><el-select v-model="kling.video_duration" size="large" style="width:100%" @change="validateConfig"><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
           <el-col :span="6"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="large" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
         </el-row>
@@ -264,7 +269,7 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
         </el-row>
         <el-form-item label="负向提示词"><el-input v-model="kling.video_negative_prompt" placeholder="排除：画面抖动、变形、闪烁、模糊"/></el-form-item>
         <div v-if="warnings.length" class="warn-panel"><span v-for="w in warnings" :key="w.field" class="warn-item">⚠ {{ w.message }}</span></div>
-        <div class="block-action"><span class="count-hint mono">积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
+        <div class="block-action"><span class="count-hint mono">视频 {{ videoCost }} 积分 · 余额 {{ auth.user?.credits||0 }}</span><el-button type="primary" size="large" @click="finalGenerate" :loading="loading"><span class="btn-icon">▶</span> 开始生成</el-button></div>
       </div>
     </template>
 
@@ -312,7 +317,7 @@ const handleVidRefUpload = uploadRef('vid', vidRefPreviews, vidRefData)
         <div class="config-group"><h4>🎥 视频配置</h4>
           <el-row :gutter="12">
             <el-col :span="6"><el-form-item label="模型"><el-select v-model="kling.video_model" size="small" style="width:100%" @change="validateConfig"><el-option v-for="m in availableVideoModels" :key="m.value" :label="m.label" :value="m.value" :disabled="m.disabled"/></el-select></el-form-item></el-col>
-            <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%"><el-option v-for="m in videoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
+            <el-col :span="4"><el-form-item label="画质"><el-select v-model="kling.video_mode" size="small" style="width:100%"><el-option v-for="m in availableVideoModes" :key="m.value" :label="m.label" :value="m.value"/></el-select></el-form-item></el-col>
             <el-col :span="4"><el-form-item label="时长(秒)"><el-select v-model="kling.video_duration" size="small" style="width:100%" @change="validateConfig"><el-option v-for="d in durations" :key="d.value" :label="d.label" :value="d.value"/></el-select></el-form-item></el-col>
             <el-col :span="5"><el-form-item label="画面比例"><el-select v-model="kling.video_aspect_ratio" size="small" style="width:100%"><el-option v-for="r in aspectRatios" :key="r.value" :label="r.label" :value="r.value"/></el-select></el-form-item></el-col>
             <el-col :span="3"><el-form-item label="声音"><el-switch v-model="kling.video_sound" active-value="on" inactive-value="off" size="small" :disabled="!currentVideoModel?.sound"/></el-form-item></el-col>
