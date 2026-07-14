@@ -40,6 +40,11 @@ async function aiRecommend() {
   <div class="home">
     <h2>快速创作</h2><p class="sub">输入你的创作想法，AI帮你完成从灵感到成片</p>
 
+    <!-- Input -->
+    <div class="input-card glass-panel">
+      <el-input v-model="story" type="textarea" :rows="6" placeholder="输入你的故事大纲或创作想法...&#10;&#10;例如：都市白领林晨被裁员后捡到一块旧怀表，时间倒流回三年前..." class="story-input"/>
+    </div>
+
     <!-- Upload bar -->
     <div class="upload-bar">
       <label class="upload-btn"><input type="file" accept="image/*" multiple hidden @change="e=>{handleImageUpload(e.target.files);e.target.value=''}"/>📎 上传参考图</label>
@@ -47,11 +52,6 @@ async function aiRecommend() {
       <span class="upload-hint" v-else>最多5张</span>
     </div>
     <div v-if="refPreviews.length" class="ref-row"><div v-for="(p,i) in refPreviews" :key="i" class="ref-thumb"><img :src="p"/><span class="ref-del" @click="removeImage(i)">✕</span></div></div>
-
-    <!-- Input -->
-    <div class="input-card glass-panel">
-      <el-input v-model="story" type="textarea" :rows="6" placeholder="输入你的故事大纲或创作想法...&#10;&#10;例如：都市白领林晨被裁员后捡到一块旧怀表，时间倒流回三年前..." class="story-input"/>
-    </div>
 
     <!-- Config -->
     <div class="config-row">
