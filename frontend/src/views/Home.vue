@@ -77,7 +77,16 @@ function confirmAd() { if(!adForm.name.trim()){ElMessage.warning('请填写产�
 async function aiRecommend() {
   if (!story.value.trim()) { ElMessage.warning('请先输入故事'); return }
   recommendLoading.value = true
-  try { const { data } = await api.post('/kling/recommend', { content: story.value }); if (data.recommended) { config.video_model=data.recommended.video_model||config.video_model; config.duration=parseInt(data.recommended.video_duration)||config.duration; config.aspect_ratio=data.recommended.video_aspect_ratio||config.aspect_ratio } ElMessage.success('AI已分析并推荐配置') } catch(e) { ElMessage.error('推荐失败') }
+  try {
+    const { data } = await api.post('/kling/recommend', { content: story.value, auto_configured: isRemakeMode.value })
+    if (data.recommended && !isRemakeMode.value) {
+      config.video_model = data.recommended.video_model || config.video_model
+      config.duration = parseInt(data.recommended.video_duration) || config.duration
+      config.aspect_ratio = data.recommended.video_aspect_ratio || config.aspect_ratio
+    }
+    if (data.warnings?.length) data.warnings.forEach(w => ElMessage.warning(w))
+    ElMessage.success(isRemakeMode.value ? 'AI已分析当前配置，给出优化建议' : 'AI已分析并推荐配置')
+  } catch(e) { ElMessage.error('推荐失败') }
   recommendLoading.value = false
 }
 </script>
