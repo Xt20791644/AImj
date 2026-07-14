@@ -73,7 +73,8 @@ function cancelRemake() {
   if (remakeOssPath.value) { api.delete(`/video/reference?path=${encodeURIComponent(remakeOssPath.value)}`).catch(()=>{}) }
   remakeVideoUrl.value = ''; remakeOssPath.value = ''; showRemake.value = false
 }
-async function submitCreate() { if(!story.value.trim()){ElMessage.warning('请输入故事内容');return}; try{await api.post('/works',{title:story.value.substring(0,30)||'AI创作',content:story.value,style:'realistic',mode:'fast',kling_config:{...config,ref_video:refVideo.value.url||'',ref_images:refImages.value}});ElMessage.success('创作任务已提交，正在生成...')}catch(e){ElMessage.error(e.response?.data?.message||'提交失败')} }
+async function submitCreate() { if(!story.value.trim()){ElMessage.warning('请输入故事内容');return}; try{await api.post('/works',{title:story.value.substring(0,30)||'AI创作',content:story.value,style:'realistic',mode:'fast',kling_config:{...config,ref_video:refVideo.value.url||'',ref_images:refImages.value}});    ElMessage.success('已提交，跳转到我的作品')
+    setTimeout(() => { if (window.switchToWorks) window.switchToWorks() }, 500)}catch(e){ElMessage.error(e.response?.data?.message||'提交失败')} }
 
 async function aiRecommend() {
   if (!story.value.trim()) { ElMessage.warning('请先输入故事'); return }
