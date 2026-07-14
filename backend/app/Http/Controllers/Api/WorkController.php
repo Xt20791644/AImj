@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessWorkJob;
 use App\Models\Work;
 use App\Models\WorkTimeline;
-use App\Services\KlingService;
+use App\Services\KlingConfig;
 use Illuminate\Http\Request;
 
 class WorkController extends Controller
