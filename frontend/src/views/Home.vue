@@ -11,8 +11,8 @@ const adStyles = ['霸总','重生','机甲','绿茶','职场','家庭','逆袭'
 
 const config = reactive({ image_model:'kling-v3-omni', image_resolution:'2k', video_model:'kling-v3-turbo', aspect_ratio:'9:16', duration:12, image_n:1 })
 const story = ref(''); const refImages = ref([]); const refPreviews = ref([])
-const recommendLoading = ref(false); const scenario = ref('')
-const remakeUrl = ref(''); const remakeFile = ref(null)
+const refVideo = ref({ url:'', ossPath:'' }) // 参考视频（内部记录，不显示链接）
+const recommendLoading = ref(false)
 const adForm = reactive({ name:'', points:'', style:'', images:[] })
 const showRemake = ref(false); const showAd = ref(false)
 const remakeVideoUrl = ref(''); const remakeUploading = ref(false); const remakeOssPath = ref('')
@@ -45,8 +45,8 @@ async function handleRemakeUpload(e) {
 
 function confirmRemake() {
   if (!remakeVideoUrl.value) { ElMessage.warning('请先上传参考视频'); return }
-  story.value = `【爆款复刻】参考视频：${remakeVideoUrl.value}`
-  showRemake.value = false; ElMessage.success('已填入创作框')
+  refVideo.value = { url: remakeVideoUrl.value, ossPath: remakeOssPath.value }
+  showRemake.value = false; ElMessage.success('已设置参考视频')
 }
 
 function cancelRemake() {
@@ -74,12 +74,17 @@ async function aiRecommend() {
     </div>
 
     <!-- Upload bar -->
-    <div class="upload-bar">
+    <div class="upload-bar" v-if="!refVideo.url">
       <label class="upload-btn"><input type="file" accept="image/*" multiple hidden @change="e=>{handleImageUpload(e.target.files);e.target.value=''}"/>📎 上传参考图</label>
       <span class="upload-hint" v-if="refImages.length">已上传 {{ refImages.length }}/5 张</span>
       <span class="upload-hint" v-else>最多5张</span>
     </div>
     <div v-if="refPreviews.length" class="ref-row"><div v-for="(p,i) in refPreviews" :key="i" class="ref-thumb"><img :src="p"/><span class="ref-del" @click="removeImage(i)">✕</span></div></div>
+    <!-- Reference video preview -->
+    <div v-if="refVideo.url" class="ref-video-card glass-panel">
+      <div class="rv-header"><span>📹 参考视频</span><span class="rv-del" @click="refVideo={url:'',ossPath:''}">✕ 移除</span></div>
+      <video :src="refVideo.url" controls style="width:100%;max-height:240px;border-radius:6px"></video>
+    </div>
 
     <!-- Config -->
     <div class="config-row">
@@ -130,4 +135,5 @@ async function aiRecommend() {
 .style-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.style-chip{padding:4px 12px;border-radius:14px;font-size:12px;cursor:pointer;border:1px solid var(--border-strong);color:var(--text-tertiary)}.style-chip.on{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .submit-bar{display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-top:20px;border-top:1px solid var(--border-subtle)}.cost-text{font-size:14px;color:var(--warning);font-family:var(--font-mono)}
 .overlay{position:fixed;inset:0;z-index:1000;background:rgba(6,8,13,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}.overlay-card{width:560px;max-width:90vw;padding:28px}.overlay-card h3{font-size:20px;color:var(--text-primary);margin-bottom:20px}.overlay-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)}
+.ref-video-card{padding:12px 16px;margin-bottom:16px}.rv-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:var(--text-secondary)}.rv-del{color:var(--danger);cursor:pointer;font-size:12px}.rv-del:hover{text-decoration:underline}
 </style>

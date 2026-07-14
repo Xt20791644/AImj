@@ -2248,3 +2248,4 @@ x-oss-object-acl:public-read
 </Error>
 "} 
 [2026-07-14 17:04:19] local.ERROR: OSS upload error: OSS上传失败，请稍后重试  
+[2026-07-14 17:06:00] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a55fbf767618.mp4  
