@@ -46,7 +46,8 @@ async function handleRemakeUpload(e) {
 function confirmRemake() {
   if (!remakeVideoUrl.value) { ElMessage.warning('请先上传参考视频'); return }
   refVideo.value = { url: remakeVideoUrl.value, ossPath: remakeOssPath.value }
-  showRemake.value = false; ElMessage.success('已设置参考视频')
+  story.value = '【爆款复刻】，根据我的爆款视频和当下热点制作同款视频。提示词需求：'
+  showRemake.value = false; ElMessage.success('已设置，可继续补充提示词')
 }
 
 function cancelRemake() {
