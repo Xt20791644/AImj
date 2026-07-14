@@ -96,9 +96,20 @@ class VideoController extends Controller
         // 上传到OSS
         if ($oss->isConfigured()) {
             $ossUrl = $oss->putObject($filename, $content, 'video/mp4');
-            return response()->json(['url' => $ossUrl, 'message' => '参考视频已上传']);
+            return response()->json(['url' => $ossUrl, 'path' => $filename, 'message' => '参考视频已上传']);
         }
 
         return response()->json(['message' => 'OSS未配置'], 500);
+    }
+
+    /** 删除OSS上的参考视频 */
+    public function deleteReference(Request $request, OssService $oss)
+    {
+        $path = $request->input('path');
+        if ($path && $oss->isConfigured()) {
+            $oss->deleteObject($path);
+            return response()->json(['message' => '已删除']);
+        }
+        return response()->json(['message' => '无需删除']);
     }
 }

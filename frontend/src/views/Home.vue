@@ -15,6 +15,7 @@ const recommendLoading = ref(false); const scenario = ref('')
 const remakeUrl = ref(''); const remakeFile = ref(null)
 const adForm = reactive({ name:'', points:'', style:'', images:[] })
 const showRemake = ref(false); const showAd = ref(false)
+const remakeVideoUrl = ref(''); const remakeUploading = ref(false); const remakeOssPath = ref('')
 const imageCost = computed(() => 8 * config.image_n)
 const videoCost = computed(() => { const r={std:1,pro:2,'4k':5}; return (r['pro']||2)*config.duration })
 const totalCost = computed(() => imageCost.value + videoCost.value)
@@ -26,16 +27,32 @@ function openScenario(type) {
   if (type==='remake') showRemake.value=true
   if (type==='ad') showAd.value=true
 }
-async function confirmRemake() {
-  if (!remakeUrl.value.trim() && !remakeFile.value) { ElMessage.warning('请填写视频链接或上传视频'); return }
-  const fd = new FormData()
-  if (remakeUrl.value.trim()) fd.append('url', remakeUrl.value.trim())
-  if (remakeFile.value) fd.append('video', remakeFile.value)
+
+// 上传参考视频到OSS
+async function handleRemakeUpload(e) {
+  const file = e.target.files[0]; if (!file) return; e.target.value = ''
+  remakeUploading.value = true
   try {
+    // 先删除旧文件
+    if (remakeOssPath.value) { try { await api.delete(`/video/reference?path=${encodeURIComponent(remakeOssPath.value)}`) } catch(e){} }
+    const fd = new FormData(); fd.append('video', file)
     const { data } = await api.post('/video/reference', fd)
-    story.value = `【爆款复刻】参考视频：${data.url}`
-    showRemake.value = false; ElMessage.success('参考视频已上传至云端')
-  } catch(e) { ElMessage.error(e.response?.data?.message || '处理失败') }
+    remakeVideoUrl.value = data.url; remakeOssPath.value = data.path || ''
+    ElMessage.success('视频已上传')
+  } catch(e) { ElMessage.error(e.response?.data?.message || '上传失败') }
+  remakeUploading.value = false
+}
+
+function confirmRemake() {
+  if (!remakeVideoUrl.value) { ElMessage.warning('请先上传参考视频'); return }
+  story.value = `【爆款复刻】参考视频：${remakeVideoUrl.value}`
+  showRemake.value = false; ElMessage.success('已填入创作框')
+}
+
+function cancelRemake() {
+  // 删除OSS上的文件
+  if (remakeOssPath.value) { api.delete(`/video/reference?path=${encodeURIComponent(remakeOssPath.value)}`).catch(()=>{}) }
+  remakeVideoUrl.value = ''; remakeOssPath.value = ''; showRemake.value = false
 }
 function confirmAd() { if(!adForm.name.trim()){ElMessage.warning('请填写产品名称');return}; story.value=`【剧情广告】产品：${adForm.name}，卖点：${adForm.points}，风格：${adForm.style||'随机'}`; showAd.value=false; ElMessage.success('已填入创作框') }
 
@@ -79,7 +96,18 @@ async function aiRecommend() {
     <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" @click="$message.success('创作任务已提交')">🚀 开始创作</el-button></div>
 
     <!-- Remake Overlay -->
-    <div v-if="showRemake" class="overlay" @click.self="showRemake=false"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3><p class="sc-hint" style="margin-bottom:12px">粘贴视频链接或上传本地视频作为参考</p><el-input v-model="remakeUrl" placeholder="抖音/快手/小红书视频链接..." size="large"/><div style="text-align:center;color:var(--text-tertiary);margin:12px 0;font-size:13px">— 或者 —</div><input type="file" accept="video/*" @change="e=>{remakeFile=e.target.files[0];e.target.value=''}"/><div class="overlay-actions"><el-button @click="showRemake=false">取消</el-button><el-button type="primary" @click="confirmRemake">确定</el-button></div></div></div>
+    <div v-if="showRemake" class="overlay" @click.self="cancelRemake"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3>
+      <p class="sc-hint" style="margin-bottom:16px">上传参考视频，AI将根据视频风格生成相似作品</p>
+      <div v-if="!remakeVideoUrl" style="text-align:center;padding:20px;border:2px dashed var(--border-strong);border-radius:var(--radius)">
+        <label class="upload-btn" style="font-size:16px;padding:12px 24px"><input type="file" accept="video/*" hidden @change="handleRemakeUpload"/>📹 选择视频文件</label>
+        <p style="color:var(--text-tertiary);font-size:12px;margin-top:8px">支持 MP4/MOV，最大 500MB</p>
+      </div>
+      <div v-else style="text-align:center">
+        <video :src="remakeVideoUrl" controls style="width:100%;max-height:300px;border-radius:8px;margin-bottom:12px"></video>
+        <el-button text type="danger" @click="cancelRemake">重新上传</el-button>
+      </div>
+      <div class="overlay-actions"><el-button @click="cancelRemake">取消</el-button><el-button type="primary" @click="confirmRemake" :disabled="!remakeVideoUrl">完善提示词</el-button></div>
+    </div></div>
 
     <!-- Ad Overlay -->
     <div v-if="showAd" class="overlay" @click.self="showAd=false"><div class="overlay-card glass-panel"><h3>📢 剧情广告</h3>
