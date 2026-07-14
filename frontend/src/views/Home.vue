@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 const api = axios.create({ baseURL: '/api', timeout: 30000 })
@@ -19,6 +19,23 @@ const remakeVideoUrl = ref(''); const remakeUploading = ref(false); const remake
 const imageCost = computed(() => 8 * config.image_n)
 const videoCost = computed(() => { const r={std:1,pro:2,'4k':5}; return (r['pro']||2)*config.duration })
 const totalCost = computed(() => imageCost.value + videoCost.value)
+const isRemakeMode = computed(() => !!refVideo.value.url)
+
+// 参考视频设置后自动配置
+watch(() => refVideo.value.url, (url) => {
+  if (!url) return
+  config.video_model = 'kling-v3-omni'
+  config.video_sound = 'on'
+  // 检测视频宽高比
+  const vid = document.createElement('video')
+  vid.preload = 'metadata'
+  vid.onloadedmetadata = () => {
+    config.aspect_ratio = vid.videoWidth > vid.videoHeight ? '16:9' : '9:16'
+    vid.remove()
+  }
+  vid.onerror = () => { config.aspect_ratio = '9:16'; vid.remove() }
+  vid.src = url
+})
 
 function handleImageUpload(files) { Array.from(files).slice(0,5-refImages.value.length).forEach(f=>{const r=new FileReader();r.onload=e=>{refPreviews.value.push(e.target.result);refImages.value.push(e.target.result)};r.readAsDataURL(f)}) }
 function removeImage(i) { refPreviews.value.splice(i,1); refImages.value.splice(i,1) }
@@ -89,7 +106,7 @@ async function aiRecommend() {
 
     <!-- Config -->
     <div class="config-row">
-      <el-select v-model="config.video_model" size="large" style="width:240px"><el-option v-for="m in videoModels" :key="m.value" :label="m.label" :value="m.value"/></el-select>
+      <el-select v-model="config.video_model" size="large" style="width:240px"><el-option v-for="m in videoModels" :key="m.value" :label="m.label + (isRemakeMode&&m.value!=='kling-v3-omni'?' 🔒':'')" :value="m.value" :disabled="isRemakeMode && m.value!=='kling-v3-omni'"/></el-select>
       <el-select v-model="config.aspect_ratio" size="large" style="width:170px"><el-option v-for="r in ratios" :key="r.value" :label="r.label" :value="r.value"/></el-select>
       <el-select v-model="config.duration" size="large" style="width:120px"><el-option v-for="d in durations" :key="d" :label="d+'秒'" :value="d"/></el-select>
       <el-button size="large" :loading="recommendLoading" @click="aiRecommend">🤖 AI推荐分析</el-button>
