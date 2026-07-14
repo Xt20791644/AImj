@@ -1808,3 +1808,7 @@ Did you mean one of these?
 [stacktrace]
 #0 {main}
 "} 
+[2026-07-14 15:34:40] local.ERROR: Cannot redeclare App\Services\KlingConfig::calcVideoCost() {"userId":1,"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Cannot redeclare App\\Services\\KlingConfig::calcVideoCost() at E:/prject/OpenCodePrject/aiduanju/backend/app/Services/KlingConfig.php:139)
+[stacktrace]
+#0 {main}
+"} 

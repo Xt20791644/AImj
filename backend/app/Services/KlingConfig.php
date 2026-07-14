@@ -135,15 +135,6 @@ class KlingConfig
         return $unit * $imageCount;
     }
 
-    /** 计算视频生成积分 */
-    public static function calcVideoCost(string $model, string $mode, int $duration): int
-    {
-        $m = self::VIDEO_MODELS[$model] ?? null;
-        if (!$m || !isset($m['pricing'])) return $duration * 2;
-        $rate = $m['pricing'][$mode] ?? 2;
-        return $rate * $duration;
-    }
-
     /** 获取模型支持的分辨率列表 */
     public static function getResolutionsForModel(string $model): array
     {
