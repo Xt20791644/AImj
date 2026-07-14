@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 const api = axios.create({ baseURL: '/api', timeout: 30000 })
+api.interceptors.request.use(c => { const t = localStorage.getItem('token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
 
 const videoModels = [{value:'kling-v3-turbo',label:'Kling 3.0 Turbo (快速·有声·推荐)'},{value:'kling-v3',label:'Kling 3.0 (旗舰·4K)'},{value:'kling-v3-omni',label:'Kling 3.0 Omni (视频编辑·4K)'},{value:'kling-o1',label:'Kling O1'},{value:'kling-v2-6',label:'Kling 2.6 (经典)'}]
 const ratios = [{value:'16:9',label:'16:9 横屏'},{value:'9:16',label:'9:16 竖屏(抖音)'},{value:'1:1',label:'1:1 方形'}]

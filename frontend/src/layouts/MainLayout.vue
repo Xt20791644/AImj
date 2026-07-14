@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 const api = axios.create({ baseURL: '/api' })
+api.interceptors.request.use(c => { const t = localStorage.getItem('token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
 const activeTab = ref('create')
 const user = ref(JSON.parse(localStorage.getItem('user')||'null'))
 const token = computed(() => localStorage.getItem('token'))
