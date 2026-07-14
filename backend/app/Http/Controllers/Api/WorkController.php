@@ -43,6 +43,12 @@ class WorkController extends Controller
     }
 
     public function index() {
-        return response()->json(Work::latest()->get());
+        return response()->json(Work::where('visible', true)->latest()->get());
+    }
+
+    public function destroy($id) {
+        $work = Work::findOrFail($id);
+        $work->update(['visible' => false]);
+        return response()->json(['message' => '已删除']);
     }
 }

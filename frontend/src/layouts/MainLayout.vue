@@ -30,7 +30,9 @@ onMounted(() => { if (isLoggedIn.value) { loadWorks(); loadCredits() } })
 
 watch(activeTab, (tab) => { if (tab === 'works') { worksKey.value++; loadWorks(); loadCredits() } })
 
-function logout() { localStorage.removeItem('token'); localStorage.removeItem('user'); user.value = null; window.location.reload() }
+async function deleteWork(w) {
+  try { await api.delete(`/works/${w.id}`); works.value = works.value.filter(x => x.id !== w.id) } catch(e) {}
+}
 function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }
 
 const filteredWorks = computed(() => {
@@ -96,7 +98,10 @@ const filteredWorks = computed(() => {
               <span class="wc-status" :class="w.status">{{ w.status === 'completed' ? '✅完成' : w.status === 'failed' ? '❌失败' : w.status === 'processing' ? '⏳生成中' : '📝等待' }}</span>
             </div>
             <div class="wc-info">
-              <h4>{{ w.title?.substring(0, 20) }}</h4>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <h4>{{ w.title?.substring(0, 20) }}</h4>
+                <span class="wc-del" @click.stop="deleteWork(w)">🗑</span>
+              </div>
               <div class="wc-meta"><span>{{ formatDate(w.created_at) }}</span><span>{{ w.duration || 0 }}秒</span></div>
             </div>
           </div>
@@ -163,6 +168,8 @@ const filteredWorks = computed(() => {
 .wc-info { padding: 12px }
 .wc-info h4 { font-size: 14px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .wc-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-tertiary); margin-top: 4px }
+.wc-del { cursor: pointer; font-size: 14px; opacity: 0.5 }
+.wc-del:hover { opacity: 1 }
 
 .tx-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: 12px; gap: 12px }
 .tx-time { color: var(--text-tertiary); white-space: nowrap }
