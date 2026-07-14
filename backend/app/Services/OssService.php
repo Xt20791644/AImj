@@ -92,7 +92,7 @@ class OssService
         }
 
         Log::error("OSS PUT failed", ['status' => $response->status(), 'body' => $response->body()]);
-        throw new \Exception("OSS上传失败 [{$response->status()}]: " . substr($response->body(), 0, 200));
+        throw new \Exception('OSS上传失败，请稍后重试');
     }
 
     /**

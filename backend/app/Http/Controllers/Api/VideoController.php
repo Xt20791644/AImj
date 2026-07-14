@@ -95,11 +95,15 @@ class VideoController extends Controller
 
         // 上传到OSS
         if ($oss->isConfigured()) {
-            $ossUrl = $oss->putObject($filename, $content, 'video/mp4');
-            return response()->json(['url' => $ossUrl, 'path' => $filename, 'message' => '参考视频已上传']);
+            try {
+                $ossUrl = $oss->putObject($filename, $content, 'video/mp4');
+                return response()->json(['url' => $ossUrl, 'path' => $filename, 'message' => '参考视频已上传']);
+            } catch (\Exception $e) {
+                Log::error('OSS upload error: ' . $e->getMessage());
+                return response()->json(['message' => '视频存储失败，请稍后重试'], 500);
+            }
         }
-
-        return response()->json(['message' => 'OSS未配置'], 500);
+        return response()->json(['message' => '云存储服务未配置，请联系管理员'], 500);
     }
 
     /** 删除OSS上的参考视频 */
