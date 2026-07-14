@@ -24,7 +24,7 @@ class KlingService
     {
         $defaults = KlingConfig::defaults();
         $body = [
-            'model_name' => $config['image_model'] ?? $defaults['image_model'],
+            'model_name' => $this->mapModel($config['image_model'] ?? 'kling-v3-omni'),
             'prompt' => $prompt,
             'negative_prompt' => $config['image_negative_prompt'] ?? '',
             'n' => (int)($config['image_n'] ?? 1),
@@ -118,6 +118,21 @@ class KlingService
     private function authHeaders(): array
     {
         return ['Authorization' => "Bearer {$this->apiKey}", 'Content-Type' => 'application/json'];
+    }
+
+    // Kling API 识别 kling-v1 等原生名称，需要映射
+    private static array $modelMap = [
+        'kling-v3' => 'kling-v1', 'kling-v3-omni' => 'kling-v1',
+        'kling-v2-1' => 'kling-v1', 'kling-v2-new' => 'kling-v1',
+        'kling-v2' => 'kling-v1', 'kling-v1-5' => 'kling-v1', 'kling-v1' => 'kling-v1',
+        'kling-image-o1' => 'kling-v1',
+        'kling-v3-turbo' => 'kling-v1', 'kling-o1' => 'kling-v1',
+        'kling-v2-6' => 'kling-v1',
+    ];
+
+    private function mapModel(string $model): string
+    {
+        return self::$modelMap[$model] ?? $model;
     }
 
     private function parseResponse($response): array
