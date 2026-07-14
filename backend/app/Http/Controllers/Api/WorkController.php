@@ -34,4 +34,8 @@ class WorkController extends Controller
 
         return response()->json($work, 201);
     }
+
+    public function index() {
+        return response()->json(Work::latest()->get());
+    }
 }
