@@ -31,7 +31,7 @@ class KlingService
             'prompt' => $prompt,
             'negative_prompt' => $config['image_negative_prompt'] ?? '',
             'n' => (int)($config['image_n'] ?? 1),
-            'aspect_ratio' => $config['image_aspect_ratio'] ?? '9:16',
+            'aspect_ratio' => $config['image_aspect_ratio'] ?? $config['aspect_ratio'] ?? '9:16',
         ];
 
         // 参考图（Base64 或 URL）
@@ -49,8 +49,8 @@ class KlingService
 
     // ============================================
     // Omni视频生成 — POST /v1/videos/omni-video
-    // 文档: https://klingai.com/document-api/api/video/3-0-omni/video-omni
-    // 支持视频参考输入
+    // 文档: https://klingai.com/document-api/api/video/o1
+    // 统一入口：文生视频 / 图生视频 / 视频参考
     // ============================================
 
     public function omniVideo(string $videoUrl, string $prompt, array $config = [], ?string $imageUrl = null): array
@@ -58,12 +58,22 @@ class KlingService
         $body = [
             'model_name' => $this->toKlingVideoModel($config['video_model'] ?? 'kling-v3-omni'),
             'prompt' => $prompt,
-            'duration' => (string)($config['video_duration'] ?? '10'),
-            'mode' => $config['video_mode'] ?? 'pro',
-            'aspect_ratio' => $config['video_aspect_ratio'] ?? '9:16',
-            'video_url' => $videoUrl,
-            'image_list' => $imageUrl ? [['image_url' => $imageUrl]] : [],
+            'duration' => (string)($config['video_duration'] ?? $config['duration'] ?? '10'),
+            'mode' => $config['video_mode'] ?? $config['mode'] ?? 'pro',
+            'aspect_ratio' => $config['video_aspect_ratio'] ?? $config['aspect_ratio'] ?? '9:16',
+            'video_list' => [
+                [
+                    'video_url' => $videoUrl,
+                    'refer_type' => 'base',
+                    'keep_original_sound' => ($config['video_sound'] ?? 'off') === 'on' ? 'yes' : 'no',
+                ],
+            ],
         ];
+
+        // 生成的首帧图作为参考
+        if ($imageUrl) {
+            $body['image_list'] = [['image_url' => $imageUrl]];
+        }
 
         if (($config['video_sound'] ?? 'off') === 'on') {
             $body['sound'] = 'on';
@@ -74,6 +84,7 @@ class KlingService
 
     // ============================================
     // 图生视频 — POST /v1/videos/image2video
+    // 文档: https://klingai.com/document-api/api/video/3-0-omni
     // ============================================
 
     public function imageToVideo(string $imageUrl, string $prompt, array $config = []): array
@@ -82,8 +93,8 @@ class KlingService
             'model_name' => $this->toKlingVideoModel($config['video_model'] ?? 'kling-v2-6'),
             'image' => $imageUrl,
             'prompt' => $prompt,
-            'duration' => (string)($config['video_duration'] ?? '5'),
-            'mode' => $config['video_mode'] ?? 'pro',
+            'duration' => (string)($config['video_duration'] ?? $config['duration'] ?? '5'),
+            'mode' => $config['video_mode'] ?? $config['mode'] ?? 'pro',
         ];
 
         if (!empty($config['video_negative_prompt'])) {
@@ -105,9 +116,9 @@ class KlingService
         $body = [
             'model_name' => $this->toKlingVideoModel($config['video_model'] ?? 'kling-v2-6'),
             'prompt' => $prompt,
-            'duration' => (string)($config['video_duration'] ?? '5'),
-            'mode' => $config['video_mode'] ?? 'pro',
-            'aspect_ratio' => $config['video_aspect_ratio'] ?? '9:16',
+            'duration' => (string)($config['video_duration'] ?? $config['duration'] ?? '5'),
+            'mode' => $config['video_mode'] ?? $config['mode'] ?? 'pro',
+            'aspect_ratio' => $config['video_aspect_ratio'] ?? $config['aspect_ratio'] ?? '9:16',
         ];
 
         if (($config['video_sound'] ?? 'off') === 'on') {
@@ -117,9 +128,18 @@ class KlingService
         return $this->post('/v1/videos/text2video', $body);
     }
 
+    // ============================================
+    // 查询结果（按 endpoint 区分）
+    // ============================================
+
     public function getVideoResult(string $taskId): array
     {
         return $this->get("/v1/videos/image2video/{$taskId}");
+    }
+
+    public function getOmniVideoResult(string $taskId): array
+    {
+        return $this->get("/v1/videos/omni-video/{$taskId}");
     }
 
     // ============================================
@@ -149,7 +169,8 @@ class KlingService
     }
 
     /**
-     * 图片模型名映射
+     * 图片模型名映射 — 按官方支持的模型 https://klingai.com/document-api/api/image/3-0-omni
+     * kling-v1, kling-v1-5, kling-v2, kling-v2-new, kling-v2-1, kling-v3
      */
     private static array $imageModelMap = [
         'kling-v3-omni' => 'kling-v3',
@@ -162,7 +183,9 @@ class KlingService
     ];
 
     /**
-     * 视频模型名映射
+     * 视频模型名映射 — 按官方支持的模型
+     * image2video: kling-v1, kling-v1-5, kling-v1-6, kling-v2-master, kling-v2-1, kling-v2-1-master, kling-v2-5-turbo, kling-v2-6, kling-v3
+     * omni-video: kling-video-o1, kling-v3-omni
      */
     private static array $videoModelMap = [
         'kling-v3-turbo' => 'kling-v2-5-turbo',
