@@ -68,14 +68,14 @@ async function aiRecommend() {
     <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" @click="$message.success('创作任务已提交')">🚀 开始创作</el-button></div>
 
     <!-- Remake Overlay -->
-    <div v-if="showRemake" class="overlay" @click.self="showRemake=false"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3><el-input v-model="remakeUrl" placeholder="粘贴抖音/快手/小红书视频链接..." size="large"/><p class="sc-hint">或本地上传参考视频</p><input type="file" accept="video/*"/><div class="overlay-actions"><el-button @click="showRemake=false">取消</el-button><el-button type="primary" @click="confirmRemake">确定 · 填入创作框</el-button></div></div></div>
+    <div v-if="showRemake" class="overlay" @click.self="showRemake=false"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3><p class="sc-hint" style="margin-bottom:12px">粘贴视频链接或上传本地视频作为参考</p><el-input v-model="remakeUrl" placeholder="抖音/快手/小红书视频链接..." size="large"/><div style="text-align:center;color:var(--text-tertiary);margin:12px 0;font-size:13px">— 或者 —</div><input type="file" accept="video/*"/><div class="overlay-actions"><el-button @click="showRemake=false">取消</el-button><el-button type="primary" @click="confirmRemake">确定</el-button></div></div></div>
 
     <!-- Ad Overlay -->
     <div v-if="showAd" class="overlay" @click.self="showAd=false"><div class="overlay-card glass-panel"><h3>📢 剧情广告</h3>
       <el-row :gutter="12"><el-col :span="12"><el-input v-model="adForm.name" placeholder="产品名称" size="large"/></el-col><el-col :span="12"><el-input v-model="adForm.points" placeholder="产品卖点" size="large"/></el-col></el-row>
       <div style="margin-top:12px"><input type="file" accept="image/*" multiple/><span style="color:var(--text-tertiary);font-size:12px;margin-left:8px">1-10张产品图</span></div>
       <div style="margin-top:12px"><span style="color:var(--text-secondary);font-size:13px">剧情风格：</span><div class="style-grid"><span v-for="s in adStyles" :key="s" class="style-chip" :class="{on:adForm.style===s}" @click="adForm.style=s">{{ s }}</span></div></div>
-      <div class="overlay-actions"><el-button @click="showAd=false">取消</el-button><el-button type="primary" @click="confirmAd">确定 · 填入创作框</el-button></div>
+      <div class="overlay-actions"><el-button @click="showAd=false">取消</el-button><el-button type="primary" @click="confirmAd">确定</el-button></div>
     </div></div>
   </div>
 </template>
