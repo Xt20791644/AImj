@@ -79,8 +79,10 @@ const availableVideoModels = computed(() => {
   const hasImages = videoRefCount.value > 0
   return videoModels.map(m => ({
     ...m,
-    disabled: (hasImages && !m.value.includes('v2-') && !m.value.includes('v3') && !m.t2v && m.value !== 'kling-video-o1')
-      ? false : (!hasImages && !m.t2v)
+    disabled: m.videoRequired
+      ? false // Omni 视频模型不受图文过滤影响
+      : (hasImages && !m.t2v && m.value !== 'kling-video-o1')
+        ? false : (!hasImages && !m.t2v)
   }))
 })
 
