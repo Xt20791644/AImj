@@ -7,6 +7,7 @@ use App\Models\WorkTimeline;
 use App\Services\KlingService;
 use App\Services\CosyVoiceService;
 use App\Services\OssService;
+use App\Services\FFmpegService;
 use App\Services\StoryPipelineService;
 use App\Services\KlingConfig;
 use Illuminate\Bus\Queueable;
@@ -30,7 +31,7 @@ class ProcessWorkJob implements ShouldQueue
         public string $startFrom = 'all'
     ) {}
 
-    public function handle(KlingService $kling, CosyVoiceService $tts, OssService $oss, StoryPipelineService $pipeline): void
+    public function handle(KlingService $kling, CosyVoiceService $tts, OssService $oss, StoryPipelineService $pipeline, FFmpegService $ffmpeg): void
     {
         $work = Work::findOrFail($this->workId);
         $work->update(['status' => 'processing']);

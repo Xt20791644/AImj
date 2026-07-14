@@ -21,7 +21,8 @@ class KlingProcessCommand extends Command
                 app(\App\Services\KlingService::class),
                 app(\App\Services\CosyVoiceService::class),
                 app(\App\Services\OssService::class),
-                app(\App\Services\StoryPipelineService::class)
+                app(\App\Services\StoryPipelineService::class),
+                app(\App\Services\FFmpegService::class)
             );
             $this->info("Work {$workId} completed successfully");
         } catch (\Throwable $e) {

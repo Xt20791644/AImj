@@ -7,7 +7,10 @@ use App\Models\Character;
 use App\Models\Episode;
 use App\Models\Storyboard;
 use App\Models\Work;
+use App\Services\FFmpegService;
+use App\Services\OssService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class StudioController extends Controller
 {
@@ -103,5 +106,64 @@ class StudioController extends Controller
         ];
 
         return response()->json($recommendations);
+    }
+
+    // ========== Long Video Composition ==========
+    public function composeWork(Request $request, $workId)
+    {
+        $episodes = Episode::where('work_id', $workId)->orderBy('episode_number')->get();
+        $allVideos = [];
+
+        foreach ($episodes as $ep) {
+            $shots = Storyboard::where('episode_id', $ep->id)
+                ->whereNotNull('output_video')
+                ->orderBy('sort')->get();
+            foreach ($shots as $s) {
+                $allVideos[] = $s->output_video;
+            }
+        }
+
+        if (count($allVideos) < 2) {
+            return response()->json(['message' => '至少需要2个视频片段才能拼接'], 400);
+        }
+
+        $ffmpeg = app(FFmpegService::class);
+        $oss = app(OssService::class);
+        $workDir = storage_path("app/works/{$workId}");
+        if (!is_dir($workDir)) mkdir($workDir, 0755, true);
+
+        // Download all clips
+        $localFiles = [];
+        foreach ($allVideos as $i => $url) {
+            $localPath = "{$workDir}/clip_{$i}.mp4";
+            $response = Http::timeout(120)->get($url);
+            if ($response->successful()) {
+                file_put_contents($localPath, $response->body());
+                $localFiles[] = $localPath;
+            }
+        }
+
+        if (count($localFiles) < 2) {
+            return response()->json(['message' => '下载视频片段失败'], 500);
+        }
+
+        // FFmpeg concat
+        $outputPath = "{$workDir}/stitched.mp4";
+        $finalPath = $ffmpeg->concatVideos($localFiles, $outputPath);
+
+        // Upload to OSS
+        $ossUrl = null;
+        if ($oss->isConfigured()) {
+            $ossUrl = $oss->uploadFromUrl('file://' . $finalPath, "works/{$workId}/stitched.mp4");
+        }
+
+        // Cleanup
+        foreach ($localFiles as $f) @unlink($f);
+
+        return response()->json([
+            'output_url' => $ossUrl ?: $finalPath,
+            'clip_count' => count($localFiles),
+            'message' => "已拼接 " . count($localFiles) . " 个片段",
+        ]);
     }
 }

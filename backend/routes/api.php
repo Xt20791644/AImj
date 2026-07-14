@@ -60,4 +60,5 @@ Route::middleware('auth:sanctum')->prefix('studio')->group(function () {
     Route::put('/episodes/{episodeId}/storyboards/{id}', [StudioController::class, 'updateStoryboard']);
     Route::delete('/episodes/{episodeId}/storyboards/{id}', [StudioController::class, 'deleteStoryboard']);
     Route::post('/recommend-model', [StudioController::class, 'recommendModel']);
+    Route::post('/works/{workId}/compose', [StudioController::class, 'composeWork']);
 });

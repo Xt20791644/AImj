@@ -11,6 +11,7 @@ $kling = app(App\Services\KlingService::class);
 $tts = app(App\Services\CosyVoiceService::class);
 $oss = app(App\Services\OssService::class);
 $pipeline = app(App\Services\StoryPipelineService::class);
+$ffmpeg = app(App\Services\FFmpegService::class);
 
 while (true) {
     $work = App\Models\Work::where('status', 'pending')
@@ -25,7 +26,7 @@ while (true) {
 
         try {
             $job = new App\Jobs\ProcessWorkJob($work->id);
-            $job->handle($kling, $tts, $oss, $pipeline);
+            $job->handle($kling, $tts, $oss, $pipeline, $ffmpeg);
             
             $work->refresh();
             echo "\n✅ 处理完成！\n";
