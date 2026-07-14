@@ -12,7 +12,8 @@ const adStyles = ['霸总','重生','机甲','绿茶','职场','家庭','逆袭'
 const config = reactive({ image_model:'kling-v3-omni', image_resolution:'2k', video_model:'kling-v3-turbo', aspect_ratio:'9:16', duration:12, image_n:1 })
 const story = ref(''); const refImages = ref([]); const refPreviews = ref([])
 const recommendLoading = ref(false); const scenario = ref('')
-const remakeUrl = ref(''); const adForm = reactive({ name:'', points:'', style:'', images:[] })
+const remakeUrl = ref(''); const remakeFile = ref(null)
+const adForm = reactive({ name:'', points:'', style:'', images:[] })
 const showRemake = ref(false); const showAd = ref(false)
 const imageCost = computed(() => 8 * config.image_n)
 const videoCost = computed(() => { const r={std:1,pro:2,'4k':5}; return (r['pro']||2)*config.duration })
@@ -25,7 +26,17 @@ function openScenario(type) {
   if (type==='remake') showRemake.value=true
   if (type==='ad') showAd.value=true
 }
-function confirmRemake() { if(!remakeUrl.value.trim()){ElMessage.warning('请输入视频链接');return}; story.value=`【爆款复刻】参考视频：${remakeUrl.value}`; showRemake.value=false; ElMessage.success('已填入创作框') }
+async function confirmRemake() {
+  if (!remakeUrl.value.trim() && !remakeFile.value) { ElMessage.warning('请填写视频链接或上传视频'); return }
+  const fd = new FormData()
+  if (remakeUrl.value.trim()) fd.append('url', remakeUrl.value.trim())
+  if (remakeFile.value) fd.append('video', remakeFile.value)
+  try {
+    const { data } = await api.post('/video/reference', fd)
+    story.value = `【爆款复刻】参考视频：${data.url}`
+    showRemake.value = false; ElMessage.success('参考视频已上传至云端')
+  } catch(e) { ElMessage.error(e.response?.data?.message || '处理失败') }
+}
 function confirmAd() { if(!adForm.name.trim()){ElMessage.warning('请填写产品名称');return}; story.value=`【剧情广告】产品：${adForm.name}，卖点：${adForm.points}，风格：${adForm.style||'随机'}`; showAd.value=false; ElMessage.success('已填入创作框') }
 
 async function aiRecommend() {
@@ -68,7 +79,7 @@ async function aiRecommend() {
     <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" @click="$message.success('创作任务已提交')">🚀 开始创作</el-button></div>
 
     <!-- Remake Overlay -->
-    <div v-if="showRemake" class="overlay" @click.self="showRemake=false"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3><p class="sc-hint" style="margin-bottom:12px">粘贴视频链接或上传本地视频作为参考</p><el-input v-model="remakeUrl" placeholder="抖音/快手/小红书视频链接..." size="large"/><div style="text-align:center;color:var(--text-tertiary);margin:12px 0;font-size:13px">— 或者 —</div><input type="file" accept="video/*"/><div class="overlay-actions"><el-button @click="showRemake=false">取消</el-button><el-button type="primary" @click="confirmRemake">确定</el-button></div></div></div>
+    <div v-if="showRemake" class="overlay" @click.self="showRemake=false"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3><p class="sc-hint" style="margin-bottom:12px">粘贴视频链接或上传本地视频作为参考</p><el-input v-model="remakeUrl" placeholder="抖音/快手/小红书视频链接..." size="large"/><div style="text-align:center;color:var(--text-tertiary);margin:12px 0;font-size:13px">— 或者 —</div><input type="file" accept="video/*" @change="e=>{remakeFile=e.target.files[0];e.target.value=''}"/><div class="overlay-actions"><el-button @click="showRemake=false">取消</el-button><el-button type="primary" @click="confirmRemake">确定</el-button></div></div></div>
 
     <!-- Ad Overlay -->
     <div v-if="showAd" class="overlay" @click.self="showAd=false"><div class="overlay-card glass-panel"><h3>📢 剧情广告</h3>
