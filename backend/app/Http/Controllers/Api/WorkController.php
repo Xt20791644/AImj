@@ -11,7 +11,6 @@ class WorkController extends Controller
 {
     public function store(Request $request)
     {
-        // 确保表存在
         if (!Schema::hasTable('works')) {
             Schema::create('works', function($t) {
                 $t->id(); $t->foreignId('user_id')->nullable()->constrained('users');
@@ -23,14 +22,22 @@ class WorkController extends Controller
             });
         }
 
+        $user = $request->user();
+
         $work = Work::create([
-            'user_id' => 1,
+            'user_id' => $user ? $user->id : 1,
             'title' => $request->title ?? 'AI创作',
             'content' => $request->content ?? '',
             'style' => $request->style ?? 'realistic',
             'status' => 'pending',
             'meta' => ['kling_config' => $request->kling_config ?? []],
         ]);
+
+        // 扣积分 + 记录
+        if ($user) {
+            $cost = 20;
+            $user->consumeCredits($cost, "创作《{$work->title}》", $work);
+        }
 
         return response()->json($work, 201);
     }
