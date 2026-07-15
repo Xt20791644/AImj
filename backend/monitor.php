@@ -34,7 +34,7 @@ while(true) {
             echo "🎨 生图中...\n";
             $r = $kling->generateImage($prompt, $config); $tid = $r['task_id']??'';
             echo "  任务:{$tid}\n"; $imgUrl = null;
-            if($tid) for($i=0;$i<20;$i++){sleep(5);$s=$kling->getImageResult($tid);echo"  轮询{$i}:{$s['task_status']}\n";if($s['task_status']==='succeed'){$imgUrl=$s['task_result']['images'][0]['url']??null;break;}if($s['task_status']==='failed')break;}
+            if($tid) for($i=0;$i<20;$i++){sleep(5);$s=$kling->getImageResult($tid);echo"  轮询{$i}:{$s['task_status']}\n";if($s['task_status']==='succeed'){$imgUrl=$s['task_result']['images'][0]['url']??($s['task_result']['images'][0]['url_1']??null);break;}if($s['task_status']==='failed')break;}
             if($imgUrl) echo "  ✅ 图片: ".mb_substr($imgUrl,0,80)."\n";
 
             echo "🎥 生视频中...\n";
@@ -42,21 +42,24 @@ while(true) {
             $refVideo = $config['ref_video'] ?? '';
             $videoPrompt = $optimizer->optimizeVideoPrompt($work->content, $config);
 
-            $isOmni = false;
+            $videoType = 'text2video';
             if ($refVideo) {
                 echo "  📹 omni-video（参考视频+生成图片）\n";
                 $vr = $kling->omniVideo($refVideo, $videoPrompt, $vc, $imgUrl);
-                $isOmni = true;
+                $videoType = 'omni';
             } elseif ($imgUrl) {
                 $vr = $kling->imageToVideo($imgUrl, $videoPrompt, $vc);
-                $isOmni = false;
+                $videoType = 'image2video';
             } else {
                 $vr = $kling->textToVideo($videoPrompt, $vc);
-                $isOmni = false;
             }
             $vtid = $vr['task_id']??''; echo "  任务:{$vtid}\n"; $videoUrl = null;
             if($vtid) for($i=0;$i<60;$i++){sleep(5);
-                $s = $isOmni ? $kling->getOmniVideoResult($vtid) : $kling->getVideoResult($vtid);
+                $s = match($videoType) {
+                    'omni' => $kling->getOmniVideoResult($vtid),
+                    'text2video' => $kling->getTextVideoResult($vtid),
+                    default => $kling->getVideoResult($vtid),
+                };
                 echo"  轮询{$i}:{$s['task_status']}\n";
                 if($s['task_status']==='succeed'){$videoUrl=$s['task_result']['videos'][0]['url']??null;break;}
                 if($s['task_status']==='failed')break;

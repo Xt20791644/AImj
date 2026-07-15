@@ -32,6 +32,7 @@ class KlingService
             'negative_prompt' => $config['image_negative_prompt'] ?? '',
             'n' => (int)($config['image_n'] ?? 1),
             'aspect_ratio' => $config['image_aspect_ratio'] ?? $config['aspect_ratio'] ?? '9:16',
+            'resolution' => $config['image_resolution'] ?? '1k',
         ];
 
         // 参考图（Base64 或 URL）
@@ -75,9 +76,8 @@ class KlingService
             $body['image_list'] = [['image_url' => $imageUrl]];
         }
 
-        if (($config['video_sound'] ?? 'off') === 'on') {
-            $body['sound'] = 'on';
-        }
+        // 有参考视频时 sound 必须为 off，由 keep_original_sound 控制是否保留原声
+        // 文档: "When a reference video is used, the sound parameter must be set to off"
 
         return $this->post('/v1/videos/omni-video', $body);
     }
@@ -135,6 +135,11 @@ class KlingService
     public function getVideoResult(string $taskId): array
     {
         return $this->get("/v1/videos/image2video/{$taskId}");
+    }
+
+    public function getTextVideoResult(string $taskId): array
+    {
+        return $this->get("/v1/videos/text2video/{$taskId}");
     }
 
     public function getOmniVideoResult(string $taskId): array
