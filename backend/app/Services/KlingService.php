@@ -65,7 +65,7 @@ class KlingService
             'video_list' => [
                 [
                     'video_url' => $videoUrl,
-                    'refer_type' => 'base',
+                    'refer_type' => 'feature',
                     'keep_original_sound' => ($config['video_sound'] ?? 'off') === 'on' ? 'yes' : 'no',
                 ],
             ],
