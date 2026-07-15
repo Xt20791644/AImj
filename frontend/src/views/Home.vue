@@ -20,6 +20,7 @@ const config = reactive({ image_model:'kling-v3-omni', image_resolution:'2k', vi
 const story = ref(''); const refImages = ref([]); const refPreviews = ref([])
 const refVideo = ref({ url:'', ossPath:'' }) // 参考视频（内部记录，不显示链接）
 const recommendLoading = ref(false)
+const submitting = ref(false)
 const adForm = reactive({ name:'', points:'', style:'', images:[] })
 const showRemake = ref(false); const showAd = ref(false)
 const remakeVideoUrl = ref(''); const remakeUploading = ref(false); const remakeOssPath = ref('')
@@ -52,6 +53,15 @@ function openScenario(type) {
   if (type==='ad') showAd.value=true
 }
 
+// 友好错误提示
+function userMsg(e) {
+  const raw = e?.response?.data?.message || e?.message || ''
+  if (/SQL|Connection|HY000|mysql/i.test(raw)) return '服务器繁忙，请稍后重试'
+  if (/timeout|timed out/i.test(raw)) return '请求超时，请检查网络后重试'
+  if (/Network Error/i.test(raw)) return '网络连接失败，请检查网络'
+  return raw || '操作失败，请稍后重试'
+}
+
 // 上传参考视频到OSS
 async function handleRemakeUpload(e) {
   const file = e.target.files[0]; if (!file) return; e.target.value = ''
@@ -62,8 +72,8 @@ async function handleRemakeUpload(e) {
     const fd = new FormData(); fd.append('video', file)
     const { data } = await api.post('/video/reference', fd)
     remakeVideoUrl.value = data.url; remakeOssPath.value = data.path || ''
-    ElMessage.success('视频已上传')
-  } catch(e) { ElMessage.error(e.response?.data?.message || '上传失败') }
+    ElMessage.success('视频上传成功')
+  } catch(e) { ElMessage.error(userMsg(e)) }
   remakeUploading.value = false
 }
 
@@ -79,8 +89,8 @@ function cancelRemake() {
   if (remakeOssPath.value) { api.delete(`/video/reference?path=${encodeURIComponent(remakeOssPath.value)}`).catch(()=>{}) }
   remakeVideoUrl.value = ''; remakeOssPath.value = ''; showRemake.value = false
 }
-async function submitCreate() { if(!story.value.trim()){ElMessage.warning('请输入故事内容');return}; try{await api.post('/works',{title:story.value.substring(0,30)||'AI创作',content:story.value,style:'realistic',mode:'fast',kling_config:{...config,ref_video:refVideo.value.url||'',ref_images:refImages.value}});    ElMessage.success('已提交，跳转到我的作品')
-    setTimeout(() => { if (window.switchToWorks) window.switchToWorks() }, 500)}catch(e){ElMessage.error(e.response?.data?.message||'提交失败')} }
+async function submitCreate() { if(!story.value.trim()){ElMessage.warning('请输入故事内容');return}; submitting.value=true; try{await api.post('/works',{title:story.value.substring(0,30)||'AI创作',content:story.value,style:'realistic',mode:'fast',kling_config:{...config,ref_video:refVideo.value.url||'',ref_images:refImages.value}});    ElMessage.success('已提交，跳转到我的作品')
+    setTimeout(() => { if (window.switchToWorks) window.switchToWorks() }, 500)}catch(e){ElMessage.error(userMsg(e))} finally { submitting.value=false } }
 
 async function aiRecommend() {
   if (!story.value.trim()) { ElMessage.warning('请先输入故事'); return }
@@ -94,7 +104,7 @@ async function aiRecommend() {
     }
     if (data.warnings?.length) data.warnings.forEach(w => ElMessage.warning(w))
     ElMessage.success(isRemakeMode.value ? 'AI已分析当前配置，给出优化建议' : 'AI已分析并推荐配置')
-  } catch(e) { ElMessage.error('推荐失败') }
+  } catch(e) { ElMessage.error(userMsg(e)) }
   recommendLoading.value = false
 }
 </script>
@@ -132,13 +142,14 @@ async function aiRecommend() {
     <div class="scenario-bar"><span class="sc-label">应用场景：</span><span class="sc-chip" @click="$message.info('开发中')">🎬 短剧Studio</span><span class="sc-chip" :class="{on:showRemake}" @click="openScenario('remake')">🔥 爆款复刻</span><span class="sc-chip" :class="{on:showAd}" @click="openScenario('ad')">📢 剧情广告</span></div>
 
     <!-- Submit -->
-    <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" @click="submitCreate">🚀 开始创作</el-button></div>
+    <div class="submit-bar"><span class="cost-text">预计 {{ totalCost }} 积分</span><el-button type="primary" size="large" :loading="submitting" @click="submitCreate">🚀 开始创作</el-button></div>
 
     <!-- Remake Overlay -->
     <div v-if="showRemake" class="overlay" @click.self="cancelRemake"><div class="overlay-card glass-panel"><h3>🔥 爆款复刻</h3>
       <p class="sc-hint" style="margin-bottom:16px">上传参考视频，AI将根据视频风格生成相似作品</p>
       <div v-if="!remakeVideoUrl" style="text-align:center;padding:20px;border:2px dashed var(--border-strong);border-radius:var(--radius)">
-        <label class="upload-btn" style="font-size:16px;padding:12px 24px"><input type="file" accept="video/*" hidden @change="handleRemakeUpload"/>📹 选择视频文件</label>
+        <label v-if="!remakeUploading" class="upload-btn" style="font-size:16px;padding:12px 24px"><input type="file" accept="video/*" hidden @change="handleRemakeUpload"/>📹 选择视频文件</label>
+        <div v-else style="padding:20px"><el-icon class="is-loading" :size="32"><i class="el-icon-loading" /></el-icon><p style="color:var(--text-tertiary);font-size:13px;margin-top:10px">正在上传，请稍候…</p></div>
         <p style="color:var(--text-tertiary);font-size:12px;margin-top:8px">支持 MP4/MOV，最大 500MB</p>
       </div>
       <div v-else style="text-align:center">

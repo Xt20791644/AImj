@@ -1,9 +1,19 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
 const api = axios.create({ baseURL: '/api' })
 api.interceptors.request.use(c => { const t = localStorage.getItem('token'); if (t) c.headers.Authorization = 'Bearer ' + t; return c })
+
+// 友好错误提示
+function userMsg(e) {
+  const raw = e?.response?.data?.message || e?.message || ''
+  if (/SQL|Connection|HY000|mysql/i.test(raw)) return '服务器繁忙，请稍后重试'
+  if (/timeout|timed out/i.test(raw)) return '请求超时，请检查网络后重试'
+  if (/Network Error/i.test(raw)) return '网络连接失败，请检查网络'
+  return raw || '操作失败，请稍后重试'
+}
 
 const activeTab = ref('create')
 const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
@@ -31,7 +41,7 @@ onMounted(() => { if (isLoggedIn.value) { loadWorks(); loadCredits() } })
 watch(activeTab, (tab) => { if (tab === 'works') { worksKey.value++; loadWorks(); loadCredits() } })
 
 async function deleteWork(w) {
-  try { await api.delete(`/works/${w.id}`); works.value = works.value.filter(x => x.id !== w.id) } catch(e) { alert('删除失败，请重新登录后再试') }
+  try { await api.delete(`/works/${w.id}`); works.value = works.value.filter(x => x.id !== w.id); ElMessage.success('已删除') } catch(e) { ElMessage.error(userMsg(e)) }
 }
 function formatDate(d) { if (!d) return ''; const t = new Date(d); return t.toLocaleDateString('zh-CN') + ' ' + t.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }
 
