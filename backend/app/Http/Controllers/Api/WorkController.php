@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\Schema;
 
 class WorkController extends Controller
 {
+    private function ensureVisibleColumn(): void
+    {
+        if (Schema::hasTable('works') && !Schema::hasColumn('works', 'visible')) {
+            Schema::table('works', fn($t) => $t->boolean('visible')->default(true)->after('duration'));
+        }
+    }
+
     public function store(Request $request)
     {
         if (!Schema::hasTable('works')) {
@@ -18,7 +25,7 @@ class WorkController extends Controller
                 $t->string('style')->default('realistic'); $t->string('status')->default('pending');
                 $t->integer('progress')->default(0); $t->text('status_text')->nullable();
                 $t->text('output_video')->nullable(); $t->text('output_cover')->nullable();
-                $t->integer('duration')->default(0); $t->json('meta')->nullable(); $t->timestamps();
+                $t->integer('duration')->default(0); $t->boolean('visible')->default(true); $t->json('meta')->nullable(); $t->timestamps();
             });
         }
 
@@ -43,10 +50,12 @@ class WorkController extends Controller
     }
 
     public function index() {
+        $this->ensureVisibleColumn();
         return response()->json(Work::where('visible', true)->latest()->get());
     }
 
     public function destroy($id) {
+        $this->ensureVisibleColumn();
         $work = Work::findOrFail($id);
         $work->update(['visible' => false]);
         return response()->json(['message' => '已删除']);

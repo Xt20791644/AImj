@@ -2307,3 +2307,4 @@ x-oss-object-acl:public-read
 [2026-07-14 21:45:51] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
 [2026-07-14 21:45:53] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
 [2026-07-14 21:45:56] local.ERROR: Kling API error {"status":400,"code":1201,"message":"model is not supported"} 
+[2026-07-15 09:41:15] local.INFO: OSS upload success: https://xt-duanju.oss-cn-beijing.aliyuncs.com/ref/6a56e538290c7.mp4  

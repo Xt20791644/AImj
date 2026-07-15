@@ -14,7 +14,7 @@ try { \Illuminate\Support\Facades\Schema::create('works', function($t) {
     $t->string('style')->default('realistic'); $t->string('status')->default('pending');
     $t->integer('progress')->default(0); $t->text('status_text')->nullable();
     $t->text('output_video')->nullable(); $t->text('output_cover')->nullable();
-    $t->integer('duration')->default(0); $t->json('meta')->nullable(); $t->timestamps();
+    $t->integer('duration')->default(0); $t->boolean('visible')->default(true); $t->json('meta')->nullable(); $t->timestamps();
 }); } catch(Exception $e) {}
 
 $kling = app(KlingService::class); $oss = app(OssService::class); $optimizer = app(PromptOptimizerService::class);

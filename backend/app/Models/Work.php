@@ -19,6 +19,7 @@ class Work extends Model
         'duration',
         'views',
         'meta',
+        'visible',
     ];
 
     protected function casts(): array
