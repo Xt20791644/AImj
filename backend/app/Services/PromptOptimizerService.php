@@ -66,11 +66,28 @@ class PromptOptimizerService
 
     /**
      * 优化视频生成的提示词（含运镜和动态描述）
+     * 爆款复刻模式：检测到 ref_video 时，构造场景描述而非操作指令
      */
     public function optimizeVideoPrompt(string $userInput, array $config = []): string
     {
-        $prompt = $this->optimize($userInput, $config);
         $duration = $config['duration'] ?? 10;
+
+        // 爆款复刻模式：用参考视频风格生成新内容，不依赖用户的空洞指令
+        if (!empty($config['ref_video'])) {
+            $styleBase = $this->getStyleBase($config['style'] ?? 'realistic');
+            $motion = match(true) {
+                $duration <= 5 => '轻微自然动作，呼吸感微动',
+                $duration <= 10 => '流畅自然的表演，人物调度自然，舒缓的运镜节奏',
+                default => '丰富的场景调度，多层次运镜变化，戏剧化的光影运动'
+            };
+            return "基于 <<<video_1>>> 的视觉风格、运镜手法、色彩调性和叙事节奏，"
+                . "生成一段全新的中国短剧视频，保持完全一致的制作水准和画面质感。"
+                . "内容为一段精彩的短视频剧情片段。"
+                . "{$styleBase}。{$motion}。"
+                . "避免：模糊，变形，低画质，卡通，动漫，AI塑料感，画面扭曲，水印，文字，logo。";
+        }
+
+        $prompt = $this->optimize($userInput, $config);
 
         // 视频特定的动态描述
         $motionHints = match(true) {
