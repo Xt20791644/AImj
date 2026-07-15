@@ -31,42 +31,53 @@ while(true) {
         echo "优化提示词: ".mb_substr($prompt,0,120)."...\n";
 
         try {
-            $work->update(['progress' => 5, 'status_text' => '优化提示词中…']);
-            echo "🎨 生图中...\n";
-            $work->update(['progress' => 10, 'status_text' => 'AI正在绘制首帧画面…']);
-            $r = $kling->generateImage($prompt, $config); $tid = $r['task_id']??'';
-            echo "  任务:{$tid}\n"; $imgUrl = null;
-            if($tid) for($i=0;$i<20;$i++){sleep(5);$s=$kling->getImageResult($tid);$work->update(['progress'=>10+intval($i/20*25),'status_text'=>"绘画中（{$s['task_status']}）"]);echo"  轮询{$i}:{$s['task_status']}\n";if($s['task_status']==='succeed'){$imgUrl=$s['task_result']['images'][0]['url']??($s['task_result']['images'][0]['url_1']??null);break;}if($s['task_status']==='failed')break;}
-            if($imgUrl) echo "  ✅ 图片: ".mb_substr($imgUrl,0,80)."\n";
-
-            echo "🎥 生视频中...\n";
-            $work->update(['progress' => 35, 'status_text' => '正在生成视频…']);
-            $vc = array_merge($config,['video_sound'=>'on','video_mode'=>'pro']);
             $refVideo = $config['ref_video'] ?? '';
+            $vc = array_merge($config,['video_sound'=>'on','video_mode'=>'pro']);
             $videoPrompt = $optimizer->optimizeVideoPrompt($work->content, $config);
 
-            $videoType = 'text2video';
             if ($refVideo) {
-                echo "  📹 omni-video（参考视频+生成图片）\n";
-                $vr = $kling->omniVideo($refVideo, $videoPrompt, $vc, $imgUrl);
-                $videoType = 'omni';
-            } elseif ($imgUrl) {
-                $vr = $kling->imageToVideo($imgUrl, $videoPrompt, $vc);
-                $videoType = 'image2video';
+                // ========== 爆款复刻：跳过生图，直接用参考视频 ==========
+                $work->update(['progress' => 10, 'status_text' => '正在生成视频…']);
+                echo "🎥 生视频中...\n  📹 omni-video（参考视频）\n";
+                $vr = $kling->omniVideo($refVideo, $videoPrompt, $vc);
+                $videoType = 'omni'; $imgUrl = null;
+                $vtid = $vr['task_id']??''; echo "  任务:{$vtid}\n"; $videoUrl = null;
+                if($vtid) for($i=0;$i<60;$i++){sleep(5);
+                    $s = $kling->getOmniVideoResult($vtid);
+                    $work->update(['progress'=>10+intval($i/60*80),'status_text'=>"视频生成中（{$s['task_status']}）"]);
+                    echo"  轮询{$i}:{$s['task_status']}\n";
+                    if($s['task_status']==='succeed'){$videoUrl=$s['task_result']['videos'][0]['url']??null;break;}
+                    if($s['task_status']==='failed')break;
+                }
             } else {
-                $vr = $kling->textToVideo($videoPrompt, $vc);
-            }
-            $vtid = $vr['task_id']??''; echo "  任务:{$vtid}\n"; $videoUrl = null;
-            if($vtid) for($i=0;$i<60;$i++){sleep(5);
-                $s = match($videoType) {
-                    'omni' => $kling->getOmniVideoResult($vtid),
-                    'text2video' => $kling->getTextVideoResult($vtid),
-                    default => $kling->getVideoResult($vtid),
-                };
-                $work->update(['progress'=>35+intval($i/60*55),'status_text'=>"视频生成中（{$s['task_status']}）"]);
-                echo"  轮询{$i}:{$s['task_status']}\n";
-                if($s['task_status']==='succeed'){$videoUrl=$s['task_result']['videos'][0]['url']??null;break;}
-                if($s['task_status']==='failed')break;
+                // ========== 普通流程：先生图再生视频 ==========
+                echo "🎨 生图中...\n";
+                $work->update(['progress' => 10, 'status_text' => 'AI正在绘制首帧画面…']);
+                $r = $kling->generateImage($prompt, $config); $tid = $r['task_id']??'';
+                echo "  任务:{$tid}\n"; $imgUrl = null;
+                if($tid) for($i=0;$i<20;$i++){sleep(5);$s=$kling->getImageResult($tid);$work->update(['progress'=>10+intval($i/20*25),'status_text'=>"绘画中（{$s['task_status']}）"]);echo"  轮询{$i}:{$s['task_status']}\n";if($s['task_status']==='succeed'){$imgUrl=$s['task_result']['images'][0]['url']??($s['task_result']['images'][0]['url_1']??null);break;}if($s['task_status']==='failed')break;}
+                if($imgUrl) echo "  ✅ 图片: ".mb_substr($imgUrl,0,80)."\n";
+
+                echo "🎥 生视频中...\n";
+                $work->update(['progress' => 35, 'status_text' => '正在生成视频…']);
+                $videoType = 'text2video';
+                if ($imgUrl) {
+                    $vr = $kling->imageToVideo($imgUrl, $videoPrompt, $vc);
+                    $videoType = 'image2video';
+                } else {
+                    $vr = $kling->textToVideo($videoPrompt, $vc);
+                }
+                $vtid = $vr['task_id']??''; echo "  任务:{$vtid}\n"; $videoUrl = null;
+                if($vtid) for($i=0;$i<60;$i++){sleep(5);
+                    $s = match($videoType) {
+                        'text2video' => $kling->getTextVideoResult($vtid),
+                        default => $kling->getVideoResult($vtid),
+                    };
+                    $work->update(['progress'=>35+intval($i/60*55),'status_text'=>"视频生成中（{$s['task_status']}）"]);
+                    echo"  轮询{$i}:{$s['task_status']}\n";
+                    if($s['task_status']==='succeed'){$videoUrl=$s['task_result']['videos'][0]['url']??null;break;}
+                    if($s['task_status']==='failed')break;
+                }
             }
 
             $ossUrl = $videoUrl; $ossCover = $imgUrl;
