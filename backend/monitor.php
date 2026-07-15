@@ -19,6 +19,54 @@ try { \Illuminate\Support\Facades\Schema::create('works', function($t) {
 
 $kling = app(KlingService::class); $oss = app(OssService::class); $optimizer = app(PromptOptimizerService::class);
 
+$dryRun = in_array('--dry-run', $argv ?? []);
+if ($dryRun) {
+    echo "=== 演练模式（不调用API，仅打印参数）===\n\n";
+    // 支持 --id=N 指定作品
+    $previewId = null;
+    foreach ($argv as $arg) { if (str_starts_with((string)$arg, '--id=')) { $previewId = (int)substr($arg, 5); break; } }
+    $work = $previewId ? Work::find($previewId) : Work::where('status', 'pending')->latest()->first();
+    if (!$work) { echo "无可用作品。用 --id=N 指定已存在的作品ID。\n"; exit; }
+    $meta = $work->meta ?? []; $config = $meta['kling_config'] ?? [];
+    $refVideo = $config['ref_video'] ?? '';
+
+    echo "📹 ID:{$work->id} 《{$work->title}》\n";
+    echo "kling_config: " . json_encode($config, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT) . "\n\n";
+
+    if ($refVideo) {
+        $videoPrompt = $optimizer->optimizeVideoPrompt($work->content, $config);
+        echo "=== 爆款复刻模式 ===\n";
+        echo "跳过生图，直接 omniVideo\n\n";
+        echo "--- omniVideo 请求体 ---\n";
+        $body = [
+            'model_name' => 'kling-v3-omni',
+            'prompt' => $videoPrompt,
+            'duration' => (string)($config['duration'] ?? '10'),
+            'mode' => 'pro',
+            'aspect_ratio' => $config['aspect_ratio'] ?? '9:16',
+            'video_list' => [['video_url' => $refVideo, 'refer_type' => 'feature', 'keep_original_sound' => ($config['video_sound']??'off')==='on'?'yes':'no']],
+        ];
+        echo json_encode($body, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT) . "\n\n";
+        echo "--- 视频 prompt ---\n{$videoPrompt}\n";
+    } else {
+        $imagePrompt = $optimizer->optimize($work->content, ['title'=>$work->title,'style'=>$work->style]);
+        echo "=== 普通模式（先生图再生视频）===\n";
+        echo "--- generateImage 请求体 ---\n";
+        $body = [
+            'model_name' => 'kling-v3',
+            'prompt' => $imagePrompt,
+            'resolution' => $config['image_resolution'] ?? '1k',
+            'n' => (int)($config['image_n'] ?? 1),
+            'aspect_ratio' => $config['aspect_ratio'] ?? '9:16',
+        ];
+        echo json_encode($body, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT) . "\n\n";
+        $videoPrompt = $optimizer->optimizeVideoPrompt($work->content, $config);
+        echo "--- 视频 prompt ---\n{$videoPrompt}\n";
+    }
+    echo "\n参数无误后可去掉 --dry-run 正式执行。\n";
+    exit;
+}
+
 echo "=== 监控模式 ===\n等待新作品...\n\n";
 $seen = [];
 while(true) {
